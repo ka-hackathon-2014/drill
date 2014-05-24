@@ -18,7 +18,7 @@ int main(int argc, char** argv)
   std::vector<std::string> args{argv, argv + argc};
   (void)args; // command line args needed?
 
-  std::atomic<bool> shutdown{0};
+  std::atomic<bool> shutdown{false};
 
   concurrent_queue<EvtMovementChange> extraction_q;
   concurrent_queue<EvtEffect> classification_q;
@@ -28,7 +28,7 @@ int main(int argc, char** argv)
     cam.interact();
   }};
 
-  std::thread classification{[&] { run_classification(extraction_q); }};
+  std::thread classification{[&] { run_classification(extraction_q, shutdown); }};
 
   std::thread sound{[&] {}};
 

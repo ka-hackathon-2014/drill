@@ -3,12 +3,12 @@
 #include <iostream>
 
 namespace drill {
-void run_classification(concurrent_queue<EvtMovementChange>& extraction_q)
+void run_classification(concurrent_queue<EvtMovementChange>& extraction_q, std::atomic<bool>& shutdown)
 {
   auto lastTp = std::chrono::system_clock::now();
   int count = 0;
 
-  while (true) {
+  while (!shutdown) {
     bool changed = false;
     auto lst = extraction_q.dequeue();
     for (const auto& evt : lst) {
