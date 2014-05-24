@@ -28,9 +28,7 @@ int main(int argc, char** argv)
     cam.interact();
   }};
 
-  std::thread classification{[&] {
-    run_classification(extraction_q);
-  }};
+  std::thread classification{[&] { run_classification(extraction_q); }};
 
   std::thread sound{[&] {}};
 

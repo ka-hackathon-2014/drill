@@ -9,4 +9,3 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q);
 }
 
 #endif /* end of include guard: CLASSIFICATION_H */
-
