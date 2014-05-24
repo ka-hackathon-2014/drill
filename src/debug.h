@@ -11,14 +11,14 @@
 
 namespace drill {
 
-// thread-safe singletonc
+// thread-safe singleton
 static monitor<std::ostream&>& out()
 {
   static monitor<std::ostream&> sync_cout{std::cout};
   return sync_cout;
 }
 
-// RAII debug lifetime messages
+// RAII-style debug lifetime messages
 class lifetime {
 public:
   lifetime(std::string name) : name_{std::move(name)}

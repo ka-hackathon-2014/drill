@@ -5,6 +5,7 @@
 
 namespace drill {
 
+// thread safe wrapper, synchronizing concurrent acceseses to any resource
 template <typename T>
 class monitor {
 private:

@@ -20,14 +20,20 @@ int main(int argc, char** argv)
 
   std::atomic<bool> shutdown{false};
 
+  /*
+   * Staged architecture: passing events through queues
+   * [extraction] --> [classification] --> [sound]
+   */
   concurrent_queue<EvtMovementChange> extraction_q;
   concurrent_queue<EvtEffect> classification_q;
 
 
+  // Extraction
   std::thread extraction{[&] {
     lifetime sentry{"extraction"};
 
     std::string classifier;
+    bool ui = true; // XXX: from args
 
     if (args.size() == 2)
       classifier = args[1];
@@ -35,10 +41,11 @@ int main(int argc, char** argv)
       classifier = "classifier/haarcascade_frontalface_alt.xml";
 
     cam cam{extraction_q, shutdown, classifier};
-    cam.interact();
+    cam.interact(ui);
   }};
 
 
+  // Classification
   std::thread classification{[&] {
     lifetime sentry{"classification"};
 
@@ -46,12 +53,14 @@ int main(int argc, char** argv)
   }};
 
 
+  // Sound
   std::thread sound{[&] {
     lifetime sentry{"sound"};
     run_sound(classification_q, shutdown);
   }};
 
 
+  // Wait for all
   sound.join();
   classification.join();
   extraction.join();

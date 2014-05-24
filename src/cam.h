@@ -22,7 +22,7 @@ public:
     shutdown_ = true;
   }
 
-  void interact();
+  void interact(bool ui = false);
 
 private:
   concurrent_queue<EvtMovementChange>& extraction_q_;

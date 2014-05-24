@@ -1,6 +1,6 @@
 drill
-drill_test
 
 build
 .*.swp
 .*.swo
+perf.*

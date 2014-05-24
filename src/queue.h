@@ -7,6 +7,7 @@
 
 namespace drill {
 
+// thread safe queue, using the tmp list-splice trick for minimal contention
 template <typename T>
 class concurrent_queue {
 public:
