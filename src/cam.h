@@ -22,7 +22,7 @@ public:
     shutdown_ = true;
   }
 
-  void interact(bool ui = false, int fps = 30, int slice_length = 200, int threshold = 10);
+  void interact(bool ui = false, int fps = 30, int slice_length = 200, int threshold = 30);
 
 private:
   concurrent_queue<EvtMovementChange>& extraction_q_;

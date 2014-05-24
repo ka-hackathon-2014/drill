@@ -95,7 +95,6 @@ void cam::interact(bool ui, int fps, int slice_length, int threshold) try
 
     sliding_window.enqueue(std::move(center));
 
-    // XXX: sort and remove front(), back() outliers
     auto it = std::begin(sliding_window);
     auto mid = it + sliding_window.size() / 2u;
     auto end = std::end(sliding_window);
@@ -116,12 +115,6 @@ void cam::interact(bool ui, int fps, int slice_length, int threshold) try
       auto event = EvtMovementChange{x, y, direction};
 
       extraction_q_.enqueue(event);
-
-      out()([&](std::ostream& out) {
-        out << "Estimation: ("
-            << "" << estimate_y << ")" << std::endl;
-      });
-      out()([&](std::ostream& out) { out << "DBG: " << accu_lhs << "," << accu_rhs << std::endl; });
     }
 
     // next frame please
