@@ -49,7 +49,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
     std::vector<Audioxx::Buffer> variants;
     for (const std::string& name : type.second) {
       std::stringstream ss;
-      ss << "sound/" << name << ".ogg";
+      ss << "sound/normalized" << name << ".ogg";
       variants.emplace_back(Audioxx::Buffer{ss.str()});
     }
     buffers.emplace(type.first, std::move(variants));
