@@ -13,10 +13,11 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
   bool calibrated = false;
   std::list<double> caliTopLst;
   std::list<double> caliBottomLst;
-  double caliTop;
-  double caliBottom;
+  double caliTop = 0;
+  double caliBottom = 0;
   int count = 0;
   bool changed = false;
+  constexpr double heightThreshold = 0.2;
 
   classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCalibrate{}});
 
@@ -27,7 +28,7 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
         changed = true;
 
         // == 1. count ==
-        if (evt.sgn > 0) {
+        if (evt.sgn < 0) {
           ++count;
           if (count == 10) {
             classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtReady{}});
@@ -38,7 +39,13 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
           }
         }
 
-        // TODO 2. height
+        // == 2. height ==
+        if (evt.sgn < 0) {
+          double deltaHeight = std::max(0.0, evt.y - caliBottom);
+          if (deltaHeight >= heightThreshold * std::abs(caliTop - caliBottom)) {
+            classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtHeight{}});
+          }
+        }
 
         // == 3. too fast ==
         auto nowTp = std::chrono::system_clock::now();
@@ -49,7 +56,7 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
         lastTp = std::chrono::system_clock::now();
       } else {
         // == 0. calibration ==
-        if (evt.sgn > 0) {
+        if (evt.sgn < 0) {
           caliBottomLst.push_back(evt.y);
         } else {
           caliTopLst.push_back(evt.y);
@@ -60,7 +67,9 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
                     static_cast<double>(caliTopLst.size());
           caliBottom = std::accumulate(caliBottomLst.begin(), caliBottomLst.end(), 0, std::plus<double>{}) /
                        static_cast<double>(caliBottomLst.size());
-          calibrated = true;
+          if (caliTop > caliBottom) {
+            calibrated = true;
+          }
         }
       }
     }
