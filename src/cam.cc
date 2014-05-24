@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <iterator>
 #include <utility>
-#include <chrono>
 #include <functional>
 
 #include <opencv2/objdetect/objdetect.hpp>
@@ -19,7 +18,7 @@ namespace drill {
 struct shutdown_t {
 };
 
-void cam::interact(bool ui, int fps, int slice_length, int threshold) try
+void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double threshold) try
 {
   cv::CascadeClassifier face_cascade;
   if (!face_cascade.load(classifier_)) {
@@ -47,7 +46,7 @@ void cam::interact(bool ui, int fps, int slice_length, int threshold) try
    * estimate direction by: sign((sum(M_items) / M) - (sum(N_items) / N))
    */
 
-  // max number of Points in a sliding window, XXX: assert signedness
+  // max number of Points in a sliding window
   bounded_queue<cv::Point> sliding_window{static_cast<std::size_t>(slice_length / 1000.f * fps)};
 
   // no signum function in stdlib, so use this instead
@@ -89,25 +88,30 @@ void cam::interact(bool ui, int fps, int slice_length, int threshold) try
       circle(captureFrame, center, 20, cvScalar(0, 0, 255, 0), -1);
       cv::imshow("outputCapture", captureFrame);
 
-      if (cv::waitKey(fps) >= 0)
+      if (cv::waitKey(static_cast<int>(fps)) >= 0)
         break;
     }
 
     sliding_window.enqueue(std::move(center));
 
     auto it = std::begin(sliding_window);
-    auto mid = it + sliding_window.size() / 2u;
+    auto mid = it + sliding_window.size() / 2;
     auto end = std::end(sliding_window);
 
     auto accu_lhs = std::accumulate(it, mid, cv::Point{0, 0}, std::plus<cv::Point>{});
     auto accu_rhs = std::accumulate(mid, end, cv::Point{0, 0}, std::plus<cv::Point>{});
 
+    // x direction not needed for now: up, down only
     auto estimate_y = accu_rhs.y - accu_lhs.y;
-    // estimate_x not needed for now: up, down only
+    // auto estimate_x = accu_rhs.x - accu_lhs.x;
 
     auto direction = sgn(estimate_y);
 
-    if (std::abs(estimate_y) > threshold && direction != old_direction) {
+    // near face requires higher threshold, assume rectangle-shaped face
+    auto scaled_threshold = static_cast<double>(face.height) * threshold;
+
+    // check for triggered event; filter jitter
+    if (direction != old_direction && static_cast<double>(std::abs(estimate_y)) > scaled_threshold) {
       old_direction = direction;
 
       auto x = static_cast<double>(face.x);

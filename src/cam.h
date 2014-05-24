@@ -1,8 +1,10 @@
 #ifndef CAM_H
 #define CAM_H
 
+#include <cstddef>
 #include <string>
 #include <atomic>
+#include <chrono>
 
 #include "queue.h"
 #include "event.h"
@@ -22,7 +24,7 @@ public:
     shutdown_ = true;
   }
 
-  void interact(bool ui = false, int fps = 30, int slice_length = 200, int threshold = 30);
+  void interact(bool ui = false, std::size_t fps = 30, std::size_t slice_length = 200, double threshold = 0.75);
 
 private:
   concurrent_queue<EvtMovementChange>& extraction_q_;

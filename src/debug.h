@@ -23,29 +23,16 @@ class lifetime {
 public:
   lifetime(std::string name) : name_{std::move(name)}
   {
-    out()([&](std::ostream& out) {
-      out << "[" << now() << "]"
-          << "[" << name_ << "]: initialized" << std::endl;
-    });
+    out()([&](std::ostream& out) { out << name_ << ": initialized" << std::endl; });
   }
 
   ~lifetime()
   {
-    out()([&](std::ostream& out) {
-      out << "[" << now() << "]"
-          << "[" << name_ << "]: shutdown" << std::endl;
-    });
+    out()([&](std::ostream& out) { out << name_ << ": shutdown" << std::endl; });
   }
 
 private:
   std::string name_;
-
-private:
-  // return type is kind of ugly -- let the type system infer it!
-  auto now() -> decltype(std::chrono::high_resolution_clock::now().time_since_epoch().count())
-  {
-    return std::chrono::high_resolution_clock::now().time_since_epoch().count();
-  }
 };
 }
 
