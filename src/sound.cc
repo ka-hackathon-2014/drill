@@ -67,7 +67,6 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
       if (!variants.empty()) {
         std::uniform_int_distribution<size_t> dist{0, variants.size() - 1};
         const auto& buffer = variants.at(dist(rng));
-        out()([&](std::ostream& out) { out << "foo" << std::endl; });
         player.play(buffer, [&]()->bool { return false; });
       }
     }

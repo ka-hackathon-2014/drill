@@ -58,8 +58,8 @@ public:
 
   ~Buffer()
   {
-      if (buffer != AL_NONE)
-    alDeleteBuffers(1, &buffer);
+    if (buffer != AL_NONE)
+      alDeleteBuffers(1, &buffer);
   }
 
   ALuint get() const noexcept
