@@ -196,7 +196,7 @@ public:
     throw;
   }
 
-  void play(const Buffer& buffer, std::function<bool()> end)
+  void play(const Buffer& buffer, std::function<bool()> end = []()->bool { return false; })
   {
     Source source;
     source.play(buffer, end);

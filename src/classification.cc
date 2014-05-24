@@ -69,6 +69,7 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
                        static_cast<double>(caliBottomLst.size());
           if (caliTop > caliBottom) {
             calibrated = true;
+            classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtStart{10, 1}});
           }
         }
       }

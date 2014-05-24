@@ -20,6 +20,18 @@ struct EvtEffect {
   virtual std::string getID() const = 0;
 };
 
+struct EvtStart : EvtEffect {
+  size_t reps;
+  size_t sets;
+  EvtStart(size_t reps_, size_t sets_) : reps(reps_), sets(sets_)
+  {
+  }
+  virtual std::string getID() const override
+  {
+    return "start";
+  }
+};
+
 struct EvtCalibrate : EvtEffect {
   virtual std::string getID() const override
   {
