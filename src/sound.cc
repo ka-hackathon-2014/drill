@@ -13,9 +13,16 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
 {
   Audioxx::Player player;
   std::vector<std::pair<std::string, std::vector<std::string>>> setup{
-      {"tooSlow", {"cola"}},
+      {"calibrate", {}},
+      {"tooSlow", {"schneller1", "schneller2", "schneller3", "schneller4", "schneller5", "schneller6", "schneller7"}},
       {"tooFast", {}},
-      {"height", {}},
+      {"height", {"tiefer1", "tiefer2", "tiefer3"}},
+      {"count_-5", {"count_-5_pissed"}},
+      {"count_-4", {"count_-4_pissed"}},
+      {"count_-3", {"count_-3_pissed"}},
+      {"count_-2", {"count_-2_pissed"}},
+      {"count_-1", {"count_-1_pissed"}},
+      {"count_0", {"count_0_pissed"}},
       {"count_1", {"count_1_normal", "count_1_passiv_aggr", "count_1_aggr"}},
       {"count_2", {"count_2_normal", "count_2_passiv_aggr", "count_2_aggr"}},
       {"count_3", {"count_3_normal", "count_3_passiv_aggr", "count_3_aggr"}},
@@ -36,7 +43,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
       {"count_18", {"count_18_normal", "count_18_passiv_aggr", "count_18_aggr"}},
       {"count_19", {"count_19_normal", "count_19_passiv_aggr", "count_19_aggr"}},
       {"count_20", {"count_20_normal", "count_20_passiv_aggr", "count_20_aggr"}},
-      {"ready", {}}};
+      {"ready", {"cola", "ende1"}}};
   std::map<std::string, std::vector<Audioxx::Buffer>> buffers;
   for (const auto& type : setup) {
     std::vector<Audioxx::Buffer> variants;
@@ -63,11 +70,16 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
 
       out()([&](std::ostream& out) { out << "Effect! (" << id << ")" << std::endl; });
 
-      const auto& variants = buffers.at(id);
-      if (!variants.empty()) {
-        std::uniform_int_distribution<size_t> dist{0, variants.size() - 1};
-        const auto& buffer = variants.at(dist(rng));
-        player.play(buffer, [&]()->bool { return false; });
+      const auto& variantsIt = buffers.find(id);
+      if (variantsIt != buffers.end()) {
+        const auto& variants = buffers.at(id);
+        if (!variants.empty()) {
+          std::uniform_int_distribution<size_t> dist{0, variants.size() - 1};
+          const auto& buffer = variants.at(dist(rng));
+          player.play(buffer, [&]()->bool { return false; });
+        }
+      } else {
+        out()([&](std::ostream& out) { out << "Warning: No sound for effect " << id << std::endl; });
       }
     }
 
