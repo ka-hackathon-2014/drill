@@ -82,7 +82,7 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
     if (current_direction != direction && static_cast<double>(std::abs(estimate_y)) > scaled_threshold) {
       direction = current_direction;
 
-      auto x = static_cast<double>(face.x), y = static_cast<double>(face.y);
+      auto x = static_cast<double>(mid->x), y = static_cast<double>(mid->y);
       extraction_q_.enqueue(EvtMovementChange{x, y, direction});
     }
 

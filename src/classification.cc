@@ -1,4 +1,5 @@
 #include "classification.h"
+#include "debug.h"
 
 #include <algorithm>
 #include <iostream>
@@ -24,6 +25,9 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
   while (!shutdown) {
     auto lst = extraction_q.dequeue();
     for (const auto& evt : lst) {
+      out()([&](std::ostream& out) {
+        out << "MvtmChange x=" << evt.x << " y=" << evt.y << " sgn=" << evt.sgn << std::endl;
+      });
       if (calibrated) {
         changed = true;
 
@@ -41,8 +45,11 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
 
         // == 2. height ==
         if (evt.sgn < 0) {
-          double deltaHeight = std::max(0.0, evt.y - caliBottom);
-          if (deltaHeight >= heightThreshold * std::abs(caliTop - caliBottom)) {
+          double deltaHeight = std::max(0.0, caliBottom - evt.y);
+          out()([&](std::ostream& out) {
+            out << "d=" << deltaHeight << " >= " << heightThreshold* std::abs(caliBottom - caliTop) << std::endl;
+          });
+          if (deltaHeight >= heightThreshold * std::abs(caliBottom - caliTop)) {
             classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtHeight{}});
           }
         }
@@ -67,7 +74,7 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
                     static_cast<double>(caliTopLst.size());
           caliBottom = std::accumulate(caliBottomLst.begin(), caliBottomLst.end(), 0, std::plus<double>{}) /
                        static_cast<double>(caliBottomLst.size());
-          if (caliTop > caliBottom) {
+          if (caliTop < caliBottom) {
             calibrated = true;
             classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtStart{10, 1}});
           }
