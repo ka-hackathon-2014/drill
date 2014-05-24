@@ -28,8 +28,9 @@ rule link
 build $builddir/main.o: cxx $srcdir/main.cc
 build $builddir/cam.o: cxx $srcdir/cam.cc
 build $builddir/classification.o: cxx $srcdir/classification.cc
+build $builddir/sound.o: cxx $srcdir/sound.cc
 
-build drill: link $builddir/main.o $builddir/cam.o $builddir/classification.o
+build drill: link $builddir/main.o $builddir/cam.o $builddir/classification.o $builddir/sound.o
 
 
 default drill

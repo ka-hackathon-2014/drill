@@ -9,6 +9,7 @@
 #include "event.h"
 #include "cam.h"
 #include "classification.h"
+#include "sound.h"
 
 
 using namespace drill;
@@ -47,9 +48,7 @@ int main(int argc, char** argv)
 
   std::thread sound{[&] {
     lifetime sentry{"sound"};
-
-    while (!shutdown)
-      ; /* spin */
+    run_sound(classification_q, shutdown);
   }};
 
 

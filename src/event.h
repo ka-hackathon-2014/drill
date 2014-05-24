@@ -22,7 +22,9 @@ struct EvtHeight : EvtEffect {
 
 struct EvtCount : EvtEffect {
   int n;
-  EvtCount(int n_) : n(n_) {}
+  EvtCount(int n_) : n(n_)
+  {
+  }
 };
 
 struct EvtReady : EvtEffect {
