@@ -29,7 +29,7 @@ public:
     return was_dry;
   }
 
-  T dequeue()
+  queue_type dequeue()
   {
     queue_type result;
 
@@ -41,7 +41,7 @@ public:
         result.splice(std::end(result), q_, std::begin(q_));
     }
 
-    return result.front();
+    return result;
   }
 
 private:
