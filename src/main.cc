@@ -43,7 +43,7 @@ int main(int argc, char** argv)
    * [extraction] --> [classification] --> [sound]
    */
   concurrent_queue<EvtMovementChange> extraction_q;
-  concurrent_queue<EvtEffect> classification_q;
+  concurrent_queue<std::unique_ptr<EvtEffect>> classification_q;
 
 
   // Extraction

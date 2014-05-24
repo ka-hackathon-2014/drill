@@ -1,6 +1,8 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include <string>
+
 namespace drill {
 
 struct EvtMovementChange {
@@ -13,15 +15,29 @@ struct EvtMovementChange {
 };
 
 struct EvtEffect {
+  virtual ~EvtEffect() = default;
+  virtual std::string getID() const = 0;
 };
 
 struct EvtTooFast : EvtEffect {
+  virtual std::string getID() const override
+  {
+    return "tooFast";
+  }
 };
 
 struct EvtTooSlow : EvtEffect {
+  virtual std::string getID() const override
+  {
+    return "tooSlow";
+  }
 };
 
 struct EvtHeight : EvtEffect {
+  virtual std::string getID() const override
+  {
+    return "height";
+  }
 };
 
 struct EvtCount : EvtEffect {
@@ -29,9 +45,17 @@ struct EvtCount : EvtEffect {
   EvtCount(int n_) : n(n_)
   {
   }
+  virtual std::string getID() const override
+  {
+    return "count";
+  }
 };
 
 struct EvtReady : EvtEffect {
+  virtual std::string getID() const override
+  {
+    return "ready";
+  }
 };
 }
 

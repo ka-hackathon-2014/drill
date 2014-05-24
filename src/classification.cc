@@ -5,7 +5,7 @@
 
 namespace drill {
 void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
-                        concurrent_queue<EvtEffect>& classification_q, std::atomic<bool>& shutdown)
+                        concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, std::atomic<bool>& shutdown)
 {
   auto lastTp = std::chrono::system_clock::now();
   int count = 0;
@@ -20,11 +20,11 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
       // == 1. count ==
       ++count;
       if (count == 10) {
-        classification_q.enqueue(EvtReady{});
+        classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtReady{}});
         shutdown = true;
         return;
       } else {
-        classification_q.enqueue(EvtCount{count});
+        classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCount{count}});
       }
 
       // TODO 2. height
@@ -35,9 +35,9 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
       auto nowTp = std::chrono::system_clock::now();
       auto deltaMs = std::chrono::duration_cast<std::chrono::milliseconds>(nowTp - lastTp).count();
       if (deltaMs > 500) {
-        classification_q.enqueue(EvtTooSlow{});
+        classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtTooSlow{}});
       } else if (deltaMs < 200) {
-        classification_q.enqueue(EvtTooFast{});
+        classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtTooFast{}});
       }
     }
 

@@ -3,25 +3,48 @@
 #include "audioxx.h"
 
 #include <map>
+#include <random>
 #include <sstream>
 #include <thread>
+#include <vector>
 
 namespace drill {
-void run_sound(concurrent_queue<EvtEffect>& classification_q, std::atomic<bool>& shutdown) try
+void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, std::atomic<bool>& shutdown) try
 {
   Audioxx::Player player;
-  std::map<std::string, Audioxx::Buffer> buffers;
-  for (const auto& name : {"cola"}) {
-    std::stringstream ss;
-    ss << "sound/" << name << ".ogg";
-    buffers.emplace(name, Audioxx::Buffer{ss.str()});
+  std::vector<std::pair<std::string, std::vector<std::string>>> setup{
+      {"tooSlow", {"cola"}}, {"tooFast", {}}, {"height", {}}, {"count", {}}, {"ready", {}}};
+  std::map<std::string, std::vector<Audioxx::Buffer>> buffers;
+  for (const auto& type : setup) {
+    std::vector<Audioxx::Buffer> variants;
+    for (const std::string& name : type.second) {
+      std::stringstream ss;
+      ss << "sound/" << name << ".ogg";
+      variants.emplace_back(Audioxx::Buffer{ss.str()});
+    }
+    buffers.emplace(type.first, std::move(variants));
   }
-  player.play(buffers.at("cola"));
+  std::random_device rdev;
+  std::mt19937 rng{rdev()};
 
   while (!shutdown) {
     auto lst = classification_q.dequeue();
     for (const auto& evt : lst) {
-      out()([&](std::ostream& out) { out << "Effect! Wohoo!" << std::endl; });
+      std::string id = evt->getID();
+      const auto& variants = buffers.at(id);
+      out()([&](std::ostream& out) { out << "Effect! (" << id << ")" << std::endl; });
+
+      if (id == "count") {
+        const auto& evtCount = dynamic_cast<const EvtCount&>(*evt);
+        size_t i = static_cast<size_t>(evtCount.n + 1);
+        if (i < variants.size()) {
+          player.play(variants.at(i), [&]()->bool { return shutdown; });
+        }
+      } else if (!variants.empty()) {
+        std::uniform_int_distribution<size_t> dist{0, variants.size() - 1};
+        const auto& buffer = variants.at(dist(rng));
+        player.play(buffer, [&]()->bool { return shutdown; });
+      }
     }
 
     if (lst.empty()) {

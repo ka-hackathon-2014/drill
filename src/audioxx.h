@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstddef>
+#include <functional>
 #include <string>
 #include <stdexcept>
 #include <AL/alure.h>
@@ -7,30 +8,30 @@
 namespace Audioxx {
 
 class Utils final {
-    public:
-    /**
-     * 1) Identify the error code.
-     * 2) Return the error as a string.
-     */
-    static std::string getALCErrorString(int err)
-    {
-      switch (err) {
-        case AL_NO_ERROR:
-          return "AL_NO_ERROR";
-        case ALC_INVALID_DEVICE:
-          return "ALC_INVALID_DEVICE";
-        case ALC_INVALID_CONTEXT:
-          return "ALC_INVALID_CONTEXT";
-        case ALC_INVALID_ENUM:
-          return "ALC_INVALID_ENUM";
-        case ALC_INVALID_VALUE:
-          return "ALC_INVALID_VALUE";
-        case ALC_OUT_OF_MEMORY:
-          return "ALC_OUT_OF_MEMORY";
-        default:
-          return "no such error code";
-      }
+public:
+  /**
+   * 1) Identify the error code.
+   * 2) Return the error as a string.
+   */
+  static std::string getALCErrorString(int err)
+  {
+    switch (err) {
+      case AL_NO_ERROR:
+        return "AL_NO_ERROR";
+      case ALC_INVALID_DEVICE:
+        return "ALC_INVALID_DEVICE";
+      case ALC_INVALID_CONTEXT:
+        return "ALC_INVALID_CONTEXT";
+      case ALC_INVALID_ENUM:
+        return "ALC_INVALID_ENUM";
+      case ALC_INVALID_VALUE:
+        return "ALC_INVALID_VALUE";
+      case ALC_OUT_OF_MEMORY:
+        return "ALC_OUT_OF_MEMORY";
+      default:
+        return "no such error code";
     }
+  }
 };
 
 /**
@@ -144,7 +145,7 @@ public:
   }
 
 
-  void play(const Buffer& buffer)
+  void play(const Buffer& buffer, std::function<bool()> end)
   {
     // XXX: link source to buffer in RAII exception-safe manner, in order to make sure it get's unlinked
     Link link(this->get(), buffer.get());
@@ -152,7 +153,7 @@ public:
     if (alurePlaySource(source, callback_wrapper, this) == AL_FALSE)
       throw std::runtime_error("Error: Unable to play buffer: " + std::string(alureGetErrorString()));
 
-    eventloop();
+    eventloop(end);
   }
 
 
@@ -167,9 +168,9 @@ private:
     static_cast<Source*>(source)->isdone = true;
   }
 
-  void eventloop(const float interval = 0.125f) const noexcept
+  void eventloop(std::function<bool()> end, const float interval = 0.125f) const noexcept
   {
-    while (not isdone) {
+    while (not isdone and not end()) {
       alureSleep(interval);
       alureUpdate();
     }
@@ -191,9 +192,9 @@ public:
     throw;
   }
 
-  void play(const Buffer& buffer)
+  void play(const Buffer& buffer, std::function<bool()> end)
   {
-    source.play(buffer);
+    source.play(buffer, end);
   }
 
 
