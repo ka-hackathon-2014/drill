@@ -15,7 +15,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
   std::vector<std::pair<std::string, std::vector<std::string>>> setup{
       {"calibrate", {}},
       {"tooSlow", {"schneller1", "schneller2", "schneller3", "schneller4", "schneller5", "schneller6", "schneller7"}},
-      {"tooFast", {}},
+      {"tooFast", {"verscheissern1"}},
       {"height", {"tiefer1", "tiefer2", "tiefer3"}},
       {"count_-5", {"count_-5_pissed"}},
       {"count_-4", {"count_-4_pissed"}},
@@ -57,7 +57,8 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
   std::random_device rdev;
   std::mt19937 rng{rdev()};
 
-  while (!shutdown) {
+  bool wasEmpty = false;
+  while (!(wasEmpty && shutdown)) {
     auto lst = classification_q.dequeue();
     for (const auto& evt : lst) {
       std::string id = evt->getID();
@@ -85,6 +86,9 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
 
     if (lst.empty()) {
       std::this_thread::sleep_for(std::chrono::milliseconds{20});
+      wasEmpty = true;
+    } else {
+      wasEmpty = false;
     }
   }
 }

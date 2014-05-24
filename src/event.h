@@ -20,6 +20,13 @@ struct EvtEffect {
   virtual std::string getID() const = 0;
 };
 
+struct EvtCalibrate : EvtEffect {
+  virtual std::string getID() const override
+  {
+    return "calibrate";
+  }
+};
+
 struct EvtTooFast : EvtEffect {
   virtual std::string getID() const override
   {
