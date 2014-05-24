@@ -19,7 +19,6 @@ void cam::interact(bool ui) try
   cv::CascadeClassifier face_cascade;
   if (!face_cascade.load(classifier_)) {
     out()([&](std::ostream& out) { out << "Error: bad classifier file" << std::endl; });
-
     throw shutdown_t{};
   }
 
@@ -53,19 +52,29 @@ void cam::interact(bool ui) try
     face_cascade.detectMultiScale(grayscaleFrame, faces, 1.1, 3, CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_SCALE_IMAGE,
                                   cv::Size(min_face, min_face), cv::Size(max_face, max_face));
 
-    if (ui) {
-      for (const auto& face : faces) {
-        cv::Point pt1(face.x + face.width, face.y + face.height);
-        cv::Point pt2(face.x, face.y);
+    // assert single biggest object
+    if (faces.size() > 1) {
+      out()([&](std::ostream& out) { out << "Error: more than one dominant face" << std::endl; });
+      throw shutdown_t{};
+    }
 
-        rectangle(captureFrame, pt1, pt2, cvScalar(0, 255, 0, 0), 1, 8, 0);
-      }
+    const auto& face = faces.front();
+
+    if (ui) {
+      cv::Point pt1(face.x + face.width, face.y + face.height);
+      cv::Point pt2(face.x, face.y);
+
+      rectangle(captureFrame, pt1, pt2, cvScalar(0, 255, 0, 0), 1, 8, 0);
 
       cv::imshow("outputCapture", captureFrame);
 
       if (cv::waitKey(30) >= 0)
         break;
     }
+
+    // XXX: dummy events for now
+    auto e = EvtMovementChange{static_cast<double>(face.x), static_cast<double>(face.y)};
+    extraction_q_.enqueue(e);
   }
 }
 catch (...)
