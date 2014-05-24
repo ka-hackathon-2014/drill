@@ -4,6 +4,7 @@
 #include <thread>
 #include <atomic>
 
+#include "signal.h"
 #include "debug.h"
 #include "queue.h"
 #include "event.h"
@@ -11,14 +12,31 @@
 #include "classification.h"
 #include "sound.h"
 
+#ifdef WIN32
+// no ctrl-c
+#else
+#include <signal.h>
+#endif
 
 using namespace drill;
+
+// signal shutdown for all stages
+static std::atomic<bool> shutdown{false};
+
 
 int main(int argc, char** argv)
 {
   std::vector<std::string> args{argv, argv + argc};
 
-  std::atomic<bool> shutdown{false};
+#ifdef WIN32
+// no ctrl-c
+#else
+  {
+    struct sigaction act;
+    act.sa_handler = [](int) { shutdown = true; };
+    ::sigaction(SIGINT, &act, nullptr);
+  }
+#endif
 
   /*
    * Staged architecture: passing events through queues
