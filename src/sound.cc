@@ -51,6 +51,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
       {"start_step_7_reps_10", {"10"}},                                 //
       {"start_step_7_reps_15", {"15"}},                                 //
       {"start_step_7_reps_20", {"20"}},                                 //
+      {"start_step_8_sep4", {"uebung_intro_5_1"}},                      //
       {"tooSlow",
        {"schneller1", "schneller2", "schneller3", "schneller4", "schneller5", "schneller6", "schneller7"}}, //
       {"tooFast", {"verscheissern1"}},                                                                      //
@@ -119,6 +120,8 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
         std::stringstream ss2;
         ss2 << "start_step_7_reps_" << evtStart.reps;
         play_variant(player, buffers, ss2.str(), rng);
+
+        play_variant(player, buffers, "start_step_8_sep4", rng);
       } else {
         if (id == "count") {
           const auto& evtCount = dynamic_cast<const EvtCount&>(*evt);

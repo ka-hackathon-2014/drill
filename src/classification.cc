@@ -29,10 +29,31 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
         out << "MvtmChange x=" << evt.x << " y=" << evt.y << " sgn=" << evt.sgn << std::endl;
       });
       if (calibrated) {
-        changed = true;
+        bool ok = true;
+        // == 1. too fast? ==
+        auto nowTp = std::chrono::system_clock::now();
+        auto deltaMs = std::chrono::duration_cast<std::chrono::milliseconds>(nowTp - lastTp).count();
+        if (deltaMs < 300) {
+          classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtTooFast{}});
+          ok = false;
+        }
+        lastTp = std::chrono::system_clock::now();
 
-        // == 1. count ==
-        if (evt.sgn < 0) {
+
+        // == 2. height? ==
+        if (ok && evt.sgn < 0) {
+          double deltaHeight = std::max(0.0, caliBottom - evt.y);
+          out()([&](std::ostream& out) {
+            out << "d=" << deltaHeight << " >= " << heightThreshold* std::abs(caliBottom - caliTop) << std::endl;
+          });
+          if (deltaHeight >= heightThreshold * std::abs(caliBottom - caliTop)) {
+            classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtHeight{}});
+            ok = false;
+          }
+        }
+
+        // == 3. count or not? ==
+        if (ok && evt.sgn < 0) {
           ++count;
           if (count == 10) {
             classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtReady{}});
@@ -42,25 +63,8 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
             classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCount{count}});
           }
         }
-
-        // == 2. height ==
-        if (evt.sgn < 0) {
-          double deltaHeight = std::max(0.0, caliBottom - evt.y);
-          out()([&](std::ostream& out) {
-            out << "d=" << deltaHeight << " >= " << heightThreshold* std::abs(caliBottom - caliTop) << std::endl;
-          });
-          if (deltaHeight >= heightThreshold * std::abs(caliBottom - caliTop)) {
-            classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtHeight{}});
-          }
-        }
-
-        // == 3. too fast ==
-        auto nowTp = std::chrono::system_clock::now();
-        auto deltaMs = std::chrono::duration_cast<std::chrono::milliseconds>(nowTp - lastTp).count();
-        if (deltaMs < 300) {
-          classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtTooFast{}});
-        }
-        lastTp = std::chrono::system_clock::now();
+        if (ok)
+          changed = true;
       } else {
         // == 0. calibration ==
         if (evt.sgn < 0) {
