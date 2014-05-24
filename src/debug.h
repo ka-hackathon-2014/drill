@@ -11,7 +11,7 @@
 
 namespace drill {
 
-// thread-safe singleton
+// thread-safe cout, used by all stages
 static monitor<std::ostream&>& out()
 {
   static monitor<std::ostream&> sync_cout{std::cout};
@@ -47,7 +47,6 @@ private:
     return std::chrono::high_resolution_clock::now().time_since_epoch().count();
   }
 };
-// thread-safe cout, used by all stages
 }
 
 #endif

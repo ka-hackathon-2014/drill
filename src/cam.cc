@@ -1,6 +1,8 @@
 #include <vector>
 #include <stdexcept>
 #include <algorithm>
+#include <iterator>
+#include <chrono>
 
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -33,11 +35,26 @@ void cam::interact(bool ui) try
 
   std::vector<cv::Rect> faces;
 
-  while (true) {
-    if (shutdown_)
-      throw shutdown_t{};
+  /*
+   * accumulator stores N+M events from a timeslice:
+   *
+   * | ..    . . | .       ...|
+   *       N    t/2     M
+   *
+   * estimate direction by: sign((sum(N_items) / N) - (sum(M_items) / M))
+   */
+  std::vector<cv::Point> accumulator_lhs;
+  std::vector<cv::Point> accumulator_rhs;
 
-    faces.clear();
+  // heuristic timeslice length
+  auto slice_length = std::chrono::milliseconds(200);
+
+  std::chrono::time_point<std::chrono::high_resolution_clock> slice_start;
+  std::chrono::time_point<std::chrono::high_resolution_clock> slice_now;
+
+  // eventloop
+  while (!shutdown_) {
+    slice_start = std::chrono::high_resolution_clock::now();
 
     captureDevice >> captureFrame;
 
@@ -46,9 +63,10 @@ void cam::interact(bool ui) try
 
     // constrain distance by heuristic: face has to be of size [5%, 50%] * frame's size
     auto frame_size = grayscaleFrame.size();
-    auto min_face = static_cast<int>(0.05f * (std::min)(frame_size.height, frame_size.width)); // 5% min
+    auto min_face = static_cast<int>(0.15f * (std::min)(frame_size.height, frame_size.width)); // 15% min
     auto max_face = static_cast<int>(0.5f * (std::min)(frame_size.height, frame_size.width));  // 50% max
 
+    // face-detect
     face_cascade.detectMultiScale(grayscaleFrame, faces, 1.1, 3, CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_SCALE_IMAGE,
                                   cv::Size(min_face, min_face), cv::Size(max_face, max_face));
 
@@ -58,14 +76,15 @@ void cam::interact(bool ui) try
       throw shutdown_t{};
     }
 
+    // no faces detected, no need to evaluate any further here
+    if (faces.size() == 0)
+      continue;
+
     const auto& face = faces.front();
+    cv::Point center{face.x + face.width / 2, face.y + face.height / 2};
 
     if (ui) {
-      cv::Point pt1(face.x + face.width, face.y + face.height);
-      cv::Point pt2(face.x, face.y);
-
-      rectangle(captureFrame, pt1, pt2, cvScalar(0, 255, 0, 0), 1, 8, 0);
-
+      circle(captureFrame, center, 20, cvScalar(0, 0, 255, 0), -1);
       cv::imshow("outputCapture", captureFrame);
 
       if (cv::waitKey(30) >= 0)
@@ -75,7 +94,13 @@ void cam::interact(bool ui) try
     // XXX: dummy events for now
     auto e = EvtMovementChange{static_cast<double>(face.x), static_cast<double>(face.y)};
     extraction_q_.enqueue(e);
+
+    // next frame please
+    faces.clear();
   }
+
+  // if we jumped out of the eventloop, force a shutdown
+  throw shutdown_t{};
 }
 catch (...)
 {
