@@ -1,6 +1,7 @@
 #include "classification.h"
 
 #include <iostream>
+#include <thread>
 
 namespace drill {
 void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
@@ -38,6 +39,10 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
       } else if (deltaMs < 200) {
         classification_q.enqueue(EvtTooFast{});
       }
+    }
+
+    if (lst.empty()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds{20});
     }
   }
 }
