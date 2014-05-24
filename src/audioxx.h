@@ -6,29 +6,32 @@
 
 namespace Audioxx {
 
-/**
- * 1) Identify the error code.
- * 2) Return the error as a string.
- */
-std::string getALCErrorString(int err)
-{
-  switch (err) {
-    case AL_NO_ERROR:
-      return "AL_NO_ERROR";
-    case ALC_INVALID_DEVICE:
-      return "ALC_INVALID_DEVICE";
-    case ALC_INVALID_CONTEXT:
-      return "ALC_INVALID_CONTEXT";
-    case ALC_INVALID_ENUM:
-      return "ALC_INVALID_ENUM";
-    case ALC_INVALID_VALUE:
-      return "ALC_INVALID_VALUE";
-    case ALC_OUT_OF_MEMORY:
-      return "ALC_OUT_OF_MEMORY";
-    default:
-      return "no such error code";
-  }
-}
+class Utils final {
+    public:
+    /**
+     * 1) Identify the error code.
+     * 2) Return the error as a string.
+     */
+    static std::string getALCErrorString(int err)
+    {
+      switch (err) {
+        case AL_NO_ERROR:
+          return "AL_NO_ERROR";
+        case ALC_INVALID_DEVICE:
+          return "ALC_INVALID_DEVICE";
+        case ALC_INVALID_CONTEXT:
+          return "ALC_INVALID_CONTEXT";
+        case ALC_INVALID_ENUM:
+          return "ALC_INVALID_ENUM";
+        case ALC_INVALID_VALUE:
+          return "ALC_INVALID_VALUE";
+        case ALC_OUT_OF_MEMORY:
+          return "ALC_OUT_OF_MEMORY";
+        default:
+          return "no such error code";
+      }
+    }
+};
 
 /**
  * Manages the mapping between a file and a memory buffer.
@@ -101,7 +104,7 @@ public:
 
     auto e = alGetError();
     if (e)
-      throw std::runtime_error(getALCErrorString(e));
+      throw std::runtime_error(Utils::getALCErrorString(e));
   }
 
   ~Link()
