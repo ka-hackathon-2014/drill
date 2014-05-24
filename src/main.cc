@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     if (args.size() == 2)
       classifier = args[1];
     else
-      classifier = "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml";
+      classifier = "classifier/haarcascade_frontalface_alt.xml";
 
     cam cam{extraction_q, shutdown, classifier};
     cam.interact();
