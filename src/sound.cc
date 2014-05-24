@@ -54,14 +54,14 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
     auto lst = classification_q.dequeue();
     for (const auto& evt : lst) {
       std::string id = evt->getID();
-      out()([&](std::ostream& out) { out << "Effect! (" << id << ")" << std::endl; });
-
       if (id == "count") {
         const auto& evtCount = dynamic_cast<const EvtCount&>(*evt);
         std::stringstream ss;
         ss << "count_" << evtCount.n;
         id = ss.str();
       }
+
+      out()([&](std::ostream& out) { out << "Effect! (" << id << ")" << std::endl; });
 
       const auto& variants = buffers.at(id);
       if (!variants.empty()) {

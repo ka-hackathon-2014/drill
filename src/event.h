@@ -6,12 +6,13 @@
 namespace drill {
 
 struct EvtMovementChange {
-  EvtMovementChange(double x_, double y_) : x{x_}, y{y_}
+  EvtMovementChange(double x_, double y_, int sgn_ = 0) : x{x_}, y{y_}, sgn(sgn_)
   {
   }
 
   double x;
   double y;
+  int sgn;
 };
 
 struct EvtEffect {

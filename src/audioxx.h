@@ -53,12 +53,13 @@ public:
 
   Buffer(Buffer&& o) : buffer(o.buffer)
   {
-    o.buffer = 0;
+    o.buffer = AL_NONE;
   }
 
   ~Buffer()
   {
-    alDeleteBuffers(1, &buffer);
+    if (buffer != AL_NONE)
+      alDeleteBuffers(1, &buffer);
   }
 
   ALuint get() const noexcept
@@ -105,12 +106,15 @@ public:
 
     auto e = alGetError();
     if (e)
-      throw std::runtime_error(Utils::getALCErrorString(e));
+      throw std::runtime_error("Unable to create Link: " + Utils::getALCErrorString(e));
   }
 
   ~Link()
   {
-    alSourcei(source, AL_BUFFER, 0);
+    alSourcei(source, AL_BUFFER, AL_NONE);
+    auto e = alGetError();
+    if (e)
+      throw std::runtime_error("Unable to create Link: " + Utils::getALCErrorString(e));
   }
 
 
@@ -147,13 +151,13 @@ public:
 
   void play(const Buffer& buffer, std::function<bool()> end)
   {
-    // XXX: link source to buffer in RAII exception-safe manner, in order to make sure it get's unlinked
     Link link(this->get(), buffer.get());
 
     if (alurePlaySource(source, callback_wrapper, this) == AL_FALSE)
       throw std::runtime_error("Error: Unable to play buffer: " + std::string(alureGetErrorString()));
 
     eventloop(end);
+    alureStopSource(source, AL_FALSE);
   }
 
 
@@ -183,7 +187,7 @@ private:
 class Player final {
 
 public:
-  explicit Player() try : device(), source()
+  explicit Player() try : device()
   {
   }
   catch (const std::runtime_error&)
@@ -194,12 +198,12 @@ public:
 
   void play(const Buffer& buffer, std::function<bool()> end)
   {
+    Source source;
     source.play(buffer, end);
   }
 
 
 private:
   Device device;
-  Source source;
 };
 }
