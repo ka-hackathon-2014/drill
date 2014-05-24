@@ -6,6 +6,7 @@
 
 #include "queue.h"
 #include "event.h"
+#include "classification.h"
 
 
 using namespace drill;
@@ -22,11 +23,7 @@ int main(int argc, char** argv)
   }};
 
   std::thread classification{[&] {
-    while (true) {
-      auto lst = extraction_q.dequeue();
-      if (lst.size())
-        std::cout << "foo" << std::endl;
-    }
+    run_classification(extraction_q);
   }};
 
   std::thread sound{[&] {}};
