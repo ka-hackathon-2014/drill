@@ -27,15 +27,15 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
       {"count_9", {"count_9_normal", "count_9_passiv_aggr", "count_9_aggr"}},
       {"count_10", {"count_10_normal", "count_10_passiv_aggr", "count_10_aggr"}},
       {"count_11", {"count_11_normal", "count_11_passiv_aggr", "count_11_aggr"}},
-      {"count_12", {"count_12_normal", "count_12_passiv_aggr"}},
-      {"count_13", {"count_13_normal", "count_13_passiv_aggr"}},
-      {"count_14", {"count_14_normal", "count_14_passiv_aggr"}},
-      {"count_15", {"count_15_normal", "count_15_passiv_aggr"}},
-      {"count_16", {"count_16_normal", "count_16_passiv_aggr"}},
-      {"count_17", {"count_17_normal", "count_17_passiv_aggr"}},
-      {"count_18", {"count_18_normal", "count_18_passiv_aggr"}},
-      {"count_19", {"count_19_normal", "count_19_passiv_aggr"}},
-      {"count_20", {"count_20_normal", "count_20_passiv_aggr"}},
+      {"count_12", {"count_12_normal", "count_12_passiv_aggr", "count_12_aggr"}},
+      {"count_13", {"count_13_normal", "count_13_passiv_aggr", "count_13_aggr"}},
+      {"count_14", {"count_14_normal", "count_14_passiv_aggr", "count_14_aggr"}},
+      {"count_15", {"count_15_normal", "count_15_passiv_aggr", "count_15_aggr"}},
+      {"count_16", {"count_16_normal", "count_16_passiv_aggr", "count_16_aggr"}},
+      {"count_17", {"count_17_normal", "count_17_passiv_aggr", "count_17_aggr"}},
+      {"count_18", {"count_18_normal", "count_18_passiv_aggr", "count_18_aggr"}},
+      {"count_19", {"count_19_normal", "count_19_passiv_aggr", "count_19_aggr"}},
+      {"count_20", {"count_20_normal", "count_20_passiv_aggr", "count_20_aggr"}},
       {"ready", {}}};
   std::map<std::string, std::vector<Audioxx::Buffer>> buffers;
   for (const auto& type : setup) {
@@ -67,7 +67,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
       if (!variants.empty()) {
         std::uniform_int_distribution<size_t> dist{0, variants.size() - 1};
         const auto& buffer = variants.at(dist(rng));
-        player.play(buffer, [&]()->bool { return shutdown; });
+        player.play(buffer, [&]()->bool { return false; });
       }
     }
 
