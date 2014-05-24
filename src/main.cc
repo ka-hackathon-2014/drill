@@ -43,8 +43,7 @@ int main(int argc, char** argv)
   }};
 
   std::thread classification{[&] {
-    run_classification(extraction_q, shutdown);
-
+    run_classification(extraction_q, classification_q, shutdown);
     sync_cout([&](std::ostream& out) { out << "[classification]: shutdown" << std::endl; });
   }};
 

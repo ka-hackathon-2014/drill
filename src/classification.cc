@@ -3,7 +3,7 @@
 #include <iostream>
 
 namespace drill {
-void run_classification(concurrent_queue<EvtMovementChange>& extraction_q, std::atomic<bool>& shutdown)
+void run_classification(concurrent_queue<EvtMovementChange>& extraction_q, concurrent_queue<EvtEffect>& classification_q, std::atomic<bool>& shutdown)
 {
   auto lastTp = std::chrono::system_clock::now();
   int count = 0;
@@ -18,9 +18,11 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q, std::
       // == 1. count ==
       ++count;
       if (count == 10) {
-        std::cout << "Rdy" << std::endl;
+        classification_q.enqueue(EvtReady{});
+        shutdown = true;
+        return;
       } else {
-        std::cout << "Count: " << count << std::endl;
+        classification_q.enqueue(EvtCount{count});
       }
 
       // TODO 2. height
@@ -31,9 +33,9 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q, std::
       auto nowTp = std::chrono::system_clock::now();
       auto deltaMs = std::chrono::duration_cast<std::chrono::milliseconds>(nowTp - lastTp).count();
       if (deltaMs > 500) {
-        std::cout << "to slow!" << std::endl;
+        classification_q.enqueue(EvtTooSlow{});
       } else if (deltaMs < 200) {
-        std::cout << "to fast!" << std::endl;
+        classification_q.enqueue(EvtTooFast{});
       }
     }
   }
