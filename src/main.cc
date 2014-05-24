@@ -1,11 +1,13 @@
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <iterator>
 #include <thread>
+#include <atomic>
 
 #include "queue.h"
 #include "event.h"
+#include "cam.h"
 #include "classification.h"
 
 
@@ -13,13 +15,17 @@ using namespace drill;
 
 int main(int argc, char** argv)
 {
+  std::vector<std::string> args{argv, argv + argc};
+  (void)args; // command line args needed?
+
+  std::atomic<bool> shutdown{0};
+
   concurrent_queue<EvtMovementChange> extraction_q;
   concurrent_queue<EvtEffect> classification_q;
 
   std::thread extraction{[&] {
-    extraction_q.enqueue(EvtMovementChange{0, 0});
-    extraction_q.enqueue(EvtMovementChange{0, 0});
-    extraction_q.enqueue(EvtMovementChange{0, 0});
+    cam cam{extraction_q, shutdown};
+    cam.interact();
   }};
 
   std::thread classification{[&] {

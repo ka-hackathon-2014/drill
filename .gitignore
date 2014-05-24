@@ -3,3 +3,4 @@ drill_test
 
 build
 .*.swp
+.*.swo
