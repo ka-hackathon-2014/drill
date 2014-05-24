@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     lifetime sentry{"extraction"};
 
     std::string classifier;
-    bool ui = true; // XXX: from args
+    bool ui = false; // XXX: from args
 
     if (args.size() == 2)
       classifier = args[1];

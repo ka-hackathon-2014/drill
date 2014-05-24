@@ -1,6 +1,8 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
+#include <cstddef>
+#include <deque>
 #include <mutex>
 #include <list>
 #include <iterator>
@@ -49,6 +51,62 @@ private:
   std::mutex mutex_;
   queue_type q_;
   bool was_dry_ = true;
+};
+
+
+// fast, simple, value-semantic using, bounded queue
+template <typename T>
+class bounded_queue {
+public:
+  using queue_type = std::deque<T>;
+  using iterator_type = typename queue_type::iterator;
+  using size_type = typename queue_type::size_type;
+
+  bounded_queue(std::size_t bound) : bound_{bound}
+  {
+  }
+
+  void enqueue(T x)
+  {
+    if (q_.size() >= bound_)
+      q_.pop_front();
+
+    q_.push_back(std::move(x));
+  }
+
+  size_type size()
+  {
+    return q_.size();
+  }
+
+  bool empty()
+  {
+    return q_.empty();
+  }
+
+  T front()
+  {
+    return q_.front();
+  }
+
+  T back()
+  {
+    return q_.back();
+  }
+
+  iterator_type begin()
+  {
+    return std::begin(q_);
+  }
+
+  iterator_type end()
+  {
+    return std::end(q_);
+  }
+
+private:
+  queue_type q_;
+  std::size_t bound_;
 };
 }
 

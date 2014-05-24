@@ -1,8 +1,10 @@
+#include <cstdlib>
 #include <vector>
 #include <stdexcept>
 #include <algorithm>
 #include <iterator>
-#include <chrono>
+#include <utility>
+#include <functional>
 
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -16,7 +18,7 @@ namespace drill {
 struct shutdown_t {
 };
 
-void cam::interact(bool ui) try
+void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double threshold) try
 {
   cv::CascadeClassifier face_cascade;
   if (!face_cascade.load(classifier_)) {
@@ -36,26 +38,25 @@ void cam::interact(bool ui) try
   std::vector<cv::Rect> faces;
 
   /*
-   * accumulator stores N+M events from a timeslice:
+   * sliding window stores N+M events from a timeslice:
    *
    * | ..    . . | .       ...|
    *       N    t/2     M
    *
-   * estimate direction by: sign((sum(N_items) / N) - (sum(M_items) / M))
+   * estimate direction by: sign((sum(M_items) / M) - (sum(N_items) / N))
    */
-  std::vector<cv::Point> accumulator_lhs;
-  std::vector<cv::Point> accumulator_rhs;
 
-  // heuristic timeslice length
-  auto slice_length = std::chrono::milliseconds(200);
+  // max number of Points in a sliding window
+  bounded_queue<cv::Point> sliding_window{static_cast<std::size_t>(slice_length / 1000.f * fps)};
 
-  std::chrono::time_point<std::chrono::high_resolution_clock> slice_start;
-  std::chrono::time_point<std::chrono::high_resolution_clock> slice_now;
+  // no signum function in stdlib, so use this instead
+  auto sgn = [](int val) { return (0 < val) - (val < 0); };
+
+  int old_direction = 0;
+
 
   // eventloop
   while (!shutdown_) {
-    slice_start = std::chrono::high_resolution_clock::now();
-
     captureDevice >> captureFrame;
 
     cv::cvtColor(captureFrame, grayscaleFrame, CV_BGR2GRAY);
@@ -63,8 +64,8 @@ void cam::interact(bool ui) try
 
     // constrain distance by heuristic: face has to be of size [5%, 50%] * frame's size
     auto frame_size = grayscaleFrame.size();
-    auto min_face = static_cast<int>(0.15f * (std::min)(frame_size.height, frame_size.width)); // 15% min
-    auto max_face = static_cast<int>(0.5f * (std::min)(frame_size.height, frame_size.width));  // 50% max
+    const auto min_face = static_cast<int>(0.15f * (std::min)(frame_size.height, frame_size.width)); // 15% min
+    const auto max_face = static_cast<int>(0.5f * (std::min)(frame_size.height, frame_size.width));  // 50% max
 
     // face-detect
     face_cascade.detectMultiScale(grayscaleFrame, faces, 1.1, 3, CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_SCALE_IMAGE,
@@ -87,13 +88,38 @@ void cam::interact(bool ui) try
       circle(captureFrame, center, 20, cvScalar(0, 0, 255, 0), -1);
       cv::imshow("outputCapture", captureFrame);
 
-      if (cv::waitKey(30) >= 0)
+      if (cv::waitKey(static_cast<int>(fps)) >= 0)
         break;
     }
 
-    // XXX: dummy events for now
-    auto e = EvtMovementChange{static_cast<double>(face.x), static_cast<double>(face.y)};
-    extraction_q_.enqueue(e);
+    sliding_window.enqueue(std::move(center));
+
+    auto it = std::begin(sliding_window);
+    auto mid = it + sliding_window.size() / 2;
+    auto end = std::end(sliding_window);
+
+    auto accu_lhs = std::accumulate(it, mid, cv::Point{0, 0}, std::plus<cv::Point>{});
+    auto accu_rhs = std::accumulate(mid, end, cv::Point{0, 0}, std::plus<cv::Point>{});
+
+    // x direction not needed for now: up, down only
+    auto estimate_y = accu_rhs.y - accu_lhs.y;
+    // auto estimate_x = accu_rhs.x - accu_lhs.x;
+
+    auto direction = sgn(estimate_y);
+
+    // near face requires higher threshold, assume rectangle-shaped face
+    auto scaled_threshold = static_cast<double>(face.height) * threshold;
+
+    // check for triggered event; filter jitter
+    if (direction != old_direction && static_cast<double>(std::abs(estimate_y)) > scaled_threshold) {
+      old_direction = direction;
+
+      auto x = static_cast<double>(face.x);
+      auto y = static_cast<double>(face.y);
+      auto event = EvtMovementChange{x, y, direction};
+
+      extraction_q_.enqueue(event);
+    }
 
     // next frame please
     faces.clear();
