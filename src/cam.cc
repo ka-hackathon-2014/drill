@@ -1,5 +1,6 @@
 #include <vector>
 #include <stdexcept>
+#include <algorithm>
 
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -44,8 +45,13 @@ void cam::interact(bool ui) try
     cv::cvtColor(captureFrame, grayscaleFrame, CV_BGR2GRAY);
     cv::equalizeHist(grayscaleFrame, grayscaleFrame);
 
+    // constrain distance by heuristic: face has to be of size [5%, 50%] * frame's size
+    auto frame_size = grayscaleFrame.size();
+    auto min_face = static_cast<int>(0.05f * (std::min)(frame_size.height, frame_size.width)); // 5% min
+    auto max_face = static_cast<int>(0.5f * (std::min)(frame_size.height, frame_size.width));  // 50% max
+
     face_cascade.detectMultiScale(grayscaleFrame, faces, 1.1, 3, CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_SCALE_IMAGE,
-                                  cv::Size(30, 30));
+                                  cv::Size(min_face, min_face), cv::Size(max_face, max_face));
 
     if (ui) {
       for (const auto& face : faces) {
