@@ -12,8 +12,7 @@ namespace drill {
 class cam {
 
 public:
-  cam(concurrent_queue<EvtMovementChange>& q, std::atomic<bool>& shutdown,
-      std::string classifier = "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml")
+  cam(concurrent_queue<EvtMovementChange>& q, std::atomic<bool>& shutdown, std::string classifier)
       : extraction_q_{q}, shutdown_{shutdown}, classifier_{std::move(classifier)}
   {
   }
