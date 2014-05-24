@@ -6,6 +6,10 @@
 #include <atomic>
 #include <chrono>
 
+#include <opencv2/objdetect/objdetect.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include "queue.h"
 #include "event.h"
 
@@ -17,6 +21,14 @@ public:
   cam(concurrent_queue<EvtMovementChange>& q, std::atomic<bool>& shutdown, std::string classifier)
       : extraction_q_{q}, shutdown_{shutdown}, classifier_{std::move(classifier)}
   {
+    // default device
+    device_.open(0);
+
+    // train classifier
+    if (!cascade_.load(classifier_)) {
+      out()([&](std::ostream& out) { out << "Error: bad classifier file" << std::endl; });
+      shutdown_ = true;
+    }
   }
 
   ~cam()
@@ -31,8 +43,17 @@ private:
   std::atomic<bool>& shutdown_;
   std::string classifier_;
 
+  cv::Mat frame_;
+  cv::VideoCapture device_;
+  cv::CascadeClassifier cascade_;
+
+  std::vector<cv::Rect> get_faces(const cv::Mat& frame, double min_depth = 0.15, double max_depth = 0.5);
+
   using clock_t_ = std::chrono::high_resolution_clock;
   using epoch_t_ = decltype(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+
+  struct shutdown_t {
+  };
 };
 }
 
