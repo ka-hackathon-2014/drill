@@ -4,7 +4,7 @@ srcdir = src
 builddir = build
 testdir = test
 cxx = clang++
-cflags = -fcolor-diagnostics -fsanitize=undefined -pipe -O2 -g -mtune=native -march=native -std=c++11 -ferror-limit=3 -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-unused-parameter -pthread
+cflags = -fcolor-diagnostics -fsanitize=undefined -pipe -O2 -g -mtune=native -march=native -std=c++11 -pthread -ferror-limit=3 -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-unused-parameter -Wno-exit-time-destructors
 ar = ar
 ldflags = -Wl,-O1 -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--demangle -Wl,--build-id -L$builddir
 libs = -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_objdetect

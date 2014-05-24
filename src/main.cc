@@ -1,12 +1,10 @@
 #include <cstdlib>
-#include <iostream>
-#include <ostream>
 #include <string>
 #include <vector>
 #include <thread>
 #include <atomic>
 
-#include "monitor.h"
+#include "debug.h"
 #include "queue.h"
 #include "event.h"
 #include "cam.h"
@@ -18,17 +16,16 @@ using namespace drill;
 int main(int argc, char** argv)
 {
   std::vector<std::string> args{argv, argv + argc};
-  (void)args; // command line args needed?
 
   std::atomic<bool> shutdown{false};
-
-  // thread-safe cout, used by all stages
-  monitor<std::ostream&> sync_cout{std::cout};
 
   concurrent_queue<EvtMovementChange> extraction_q;
   concurrent_queue<EvtEffect> classification_q;
 
+
   std::thread extraction{[&] {
+    lifetime sentry{"extraction"};
+
     std::string classifier;
 
     if (args.size() == 2)
@@ -38,18 +35,23 @@ int main(int argc, char** argv)
 
     cam cam{extraction_q, shutdown, classifier};
     cam.interact();
-
-    sync_cout([&](std::ostream& out) { out << "[camera]: shutdown" << std::endl; });
   }};
+
 
   std::thread classification{[&] {
+    lifetime sentry{"classification"};
+
     run_classification(extraction_q, classification_q, shutdown);
-    sync_cout([&](std::ostream& out) { out << "[classification]: shutdown" << std::endl; });
   }};
 
+
   std::thread sound{[&] {
-    sync_cout([&](std::ostream& out) { out << "[sound]: shutdown" << std::endl; });
+    lifetime sentry{"sound"};
+
+    while (!shutdown)
+      ; /* spin */
   }};
+
 
   sound.join();
   classification.join();
