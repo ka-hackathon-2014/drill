@@ -36,23 +36,23 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
 {
   Audioxx::Player player;
   std::vector<std::pair<std::string, std::vector<std::string>>> setup{
-      {"calibrate", {}},                                                //
-      {"out", {"ausdembild1"}},                                         //
-      {"start_step_1_intro", {"uebung_intro_1_1", "uebung_intro_1_2"}}, //
-      {"start_step_2_sep1", {"uebung_intro_2_1"}},                      //
-      {"start_step_3_type_only", {"kniebeugen"}},                       //
-      {"start_step_4_sep2", {"uebung_intro_3_1"}},                      //
-      {"start_step_5_sets_1", {"1"}},                                   //
-      {"start_step_5_sets_2", {"2"}},                                   //
-      {"start_step_5_sets_3", {"3"}},                                   //
-      {"start_step_5_sets_4", {"4"}},                                   //
-      {"start_step_5_sets_5", {"5"}},                                   //
-      {"start_step_6_sep3", {"uebung_intro_4_1"}},                      //
-      {"start_step_7_reps_5", {"5"}},                                   //
-      {"start_step_7_reps_10", {"10"}},                                 //
-      {"start_step_7_reps_15", {"15"}},                                 //
-      {"start_step_7_reps_20", {"20"}},                                 //
-      {"start_step_8_sep4", {"uebung_intro_5_1"}},                      //
+      {"calibrate", {"anfang_merged"}},                                                     //
+      {"out", {"ausdembild1", "ausdembild2", "ausdembild3", "ausdembild4", "ausdembild5"}}, //
+      {"start_step_1_intro", {"uebung_intro_1_1", "uebung_intro_1_2"}},                     //
+      {"start_step_2_sep1", {"uebung_intro_2_1"}},                                          //
+      {"start_step_3_type_only", {"kniebeugen"}},                                           //
+      {"start_step_4_sep2", {"uebung_intro_3_1"}},                                          //
+      {"start_step_5_sets_1", {"1"}},                                                       //
+      {"start_step_5_sets_2", {"2"}},                                                       //
+      {"start_step_5_sets_3", {"3"}},                                                       //
+      {"start_step_5_sets_4", {"4"}},                                                       //
+      {"start_step_5_sets_5", {"5"}},                                                       //
+      {"start_step_6_sep3", {"uebung_intro_4_1"}},                                          //
+      {"start_step_7_reps_5", {"5"}},                                                       //
+      {"start_step_7_reps_10", {"10"}},                                                     //
+      {"start_step_7_reps_15", {"15"}},                                                     //
+      {"start_step_7_reps_20", {"20"}},                                                     //
+      {"start_step_8_sep4", {"uebung_intro_5_1"}},                                          //
       {"tooSlow",
        {"schneller1", "schneller2", "schneller3", "schneller4", "schneller5", "schneller6", "schneller7"}}, //
       {"tooFast", {"verscheissern1"}},                                                                      //
@@ -84,7 +84,10 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
       {"count_19", {"count_19_normal", "count_19_passiv_aggr", "count_19_aggr"}},                           //
       {"count_20", {"count_20_normal", "count_20_passiv_aggr", "count_20_aggr"}},                           //
       {"nextSet", {"pause1", "pause2"}},                                                                    //
-      {"ready", {"cola", "ende1"}}};
+      {"mot", {"mot_beweg_dich1",  "mot_beweg_dich2",     "mot_bund1",              "mot_lieber_gott1",
+               "mot_mach_weiter1", "mot_mama1",           "mot_noch_nicht_fertig1", "mot_noch_nicht_fertig2",
+               "mot_schlecht1",    "mot_streng_dich_an1", "mot_traenen1",           "mot_weichei1"}}, //
+      {"ready", {"ende1", "ende2", "ende3", "ende4", "ende5", "ende6"}}};
   std::map<std::string, std::vector<Audioxx::Buffer>> buffers;
   for (const auto& type : setup) {
     std::vector<Audioxx::Buffer> variants;

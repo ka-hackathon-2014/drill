@@ -106,6 +106,13 @@ struct EvtReady : EvtEffect {
     return "ready";
   }
 };
+
+struct EvtMotivation : EvtEffect {
+  virtual std::string getID() const override
+  {
+    return "mot";
+  }
+};
 }
 
 #endif /* end of include guard: EVENT_H */

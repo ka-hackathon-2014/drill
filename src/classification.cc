@@ -27,6 +27,8 @@ struct RepsSets {
   }
 };
 
+std::pair<std::size_t, std::size_t> chooseSetsReps();
+
 std::pair<std::size_t, std::size_t> chooseSetsReps()
 {
   std::vector<std::pair<std::size_t, std::vector<std::size_t>>> styles{{1, {20}},         //
@@ -57,6 +59,7 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
   RepsSets<int> count{0, 0};
   bool changed = false;
   constexpr double heightThreshold = 0.2;
+  int rating = 0;
 
   RepsSets<std::size_t> cfg;
   std::tie(cfg.sets, cfg.reps) = chooseSetsReps();
@@ -64,6 +67,7 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
   classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCalibrate{}});
 
   while (!shutdown) {
+    // #################### event parsing ####################
     auto lst = extraction_q.dequeue();
     for (const auto& evt : lst) {
       if (evt->getID() == "movement") {
@@ -113,8 +117,12 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
               classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCount{count.reps}});
             }
           }
-          if (ok)
+          if (ok) {
             changed = true;
+            rating += 1;
+          } else {
+            rating -= 2;
+          }
         } else {
           // == 0. calibration ==
           if (evtMovement.sgn < 0) {
@@ -139,6 +147,7 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
       }
     }
 
+    // #################### time bounds ####################
     if (changed) {
       // == 4. speed ==
       auto nowTp = std::chrono::system_clock::now();
@@ -147,6 +156,12 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
         classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtTooSlow{}});
         changed = false;
       }
+    }
+
+    // #################### rating ####################
+    if (rating <= -3) {
+      rating = 0;
+      classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtMotivation{}});
     }
 
     if (lst.empty()) {
