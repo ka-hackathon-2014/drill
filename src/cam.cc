@@ -5,6 +5,8 @@
 #include <iterator>
 #include <utility>
 #include <functional>
+#include <deque>
+#include <algorithm>
 
 #include "debug.h"
 #include "cam.h"
@@ -22,19 +24,9 @@ namespace {
 
 void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double threshold) try
 {
-
-  // max number of Points in a sliding window pre-calculatable, assumes fixed fps -- heuristic
-  auto max_points = static_cast<std::size_t>(slice_length / 1000.f * fps);
-
-  /*
-   * sliding window stores N+M events from a timeslice:
-   *
-   * | ..    . . | .       ...|
-   *       N    t/2     M
-   *
-   * estimate direction by: sign((sum(M_items) / M) - (sum(N_items) / N))
-   */
-  bounded_queue<cv::Point> sliding_window{max_points};
+  auto start = std::chrono::system_clock::now();
+  std::deque<std::pair<std::size_t, cv::Point>> window_old;
+  std::deque<std::pair<std::size_t, cv::Point>> window_new;
 
   if (ui)
     cv::namedWindow("outputCapture", 1);
@@ -63,16 +55,24 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
     }
 
     // rolling window
-    sliding_window.enqueue(std::move(center));
+    std::size_t now = static_cast<std::size_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count());
+    window_new.push_back(std::make_pair(now, center));
+    while (!window_new.empty() && (now - window_new.front().first > slice_length / 2)) {
+      window_old.push_back(window_new.front());
+      window_new.pop_front();
+    }
+    while (!window_old.empty() && (now - window_old.front().first > slice_length)) {
+      window_old.pop_front();
+    }
 
-    auto it = std::begin(sliding_window), mid = it + sliding_window.size() / 2, end = std::end(sliding_window);
+    auto accu_func = [](double a, std::pair<std::size_t, cv::Point> b) { return a + static_cast<double>(b.second.y); };
+    auto accu_old_y = std::accumulate(window_old.cbegin(), window_old.cend(), 0.0, accu_func) /
+                      static_cast<double>(std::max(std::size_t{1}, window_old.size()));
+    auto accu_new_y = std::accumulate(window_new.cbegin(), window_new.cend(), 0.0, accu_func) /
+                      static_cast<double>(window_new.size());
 
-    auto accu_lhs = std::accumulate(it, mid, cv::Point{0, 0}, std::plus<cv::Point>{});
-    auto accu_rhs = std::accumulate(mid, end, cv::Point{0, 0}, std::plus<cv::Point>{});
-
-    auto estimate_y = accu_rhs.y - accu_lhs.y, estimate_x = accu_rhs.x - accu_lhs.x;
-    (void)estimate_x; // x direction not needed for now: up, down only
-
+    auto estimate_y = accu_new_y - accu_old_y;
     auto current_direction = sgn(estimate_y);
 
     // near face requires higher threshold, assume rectangle-shaped face
@@ -82,7 +82,7 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
     if (current_direction != direction && static_cast<double>(std::abs(estimate_y)) > scaled_threshold) {
       direction = current_direction;
 
-      auto x = static_cast<double>(mid->x), y = static_cast<double>(mid->y);
+      auto x = static_cast<double>(window_new.front().second.x), y = static_cast<double>(window_new.front().second.y);
       extraction_q_.enqueue(EvtMovementChange{x, y, direction});
     }
 
