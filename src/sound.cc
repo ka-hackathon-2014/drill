@@ -33,18 +33,22 @@ void play_variant(Audioxx::Player& player, const std::map<std::string, std::vect
         // length is just set to 5*number_of_variants
         // if there is only 1 variant, we have to repeet :(
         std::vector<std::size_t> idxs;
+        std::vector<size_t> choices;
+        for (std::size_t j = 0; j < variants.size(); ++j) {
+          choices.push_back(j);
+        }
 
         for (std::size_t i = 0; i < variants.size() * 5; ++i) {
-          if (variants.size() == 1) {
-            idxs.push_back(0);
+          std::shuffle(choices.begin(), choices.end(), rng);
+
+          if (idxs.empty() || (choices.size() == 1)) {
+            idxs.push_back(choices.at(0));
           } else {
-            std::vector<size_t> choices;
-            for (std::size_t j = 0; j < variants.size(); ++j) {
-              if (i != j) {
-                choices.push_back(j);
-              }
+            if (idxs.back() == choices.front()) {
+              idxs.push_back(choices.at(1));
+            } else {
+              idxs.push_back(choices.at(0));
             }
-            idxs.push_back(choices.at(std::uniform_int_distribution<std::size_t> { 0, choices.size() - 1 }(rng)));
           }
         }
 

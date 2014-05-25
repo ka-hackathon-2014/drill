@@ -121,6 +121,7 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
               } else {
                 classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtNextSet{}});
                 count.reps = 0;
+                changed = false;
               }
             } else {
               classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCount{count.reps}});
@@ -129,10 +130,11 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
 
           // check and rate
           if (ok) {
-            changed = true;
+            if (count.reps > 0)
+              changed = true;
             rating += 1;
           } else {
-            rating -= 2;
+            rating -= 5;
           }
         } else {
           // == 0. calibration ==
@@ -170,7 +172,7 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
     }
 
     // #################### rating ####################
-    if (rating <= -3) {
+    if (rating < -5) {
       rating = 0;
       classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtMotivation{}});
     }
