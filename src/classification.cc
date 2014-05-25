@@ -110,19 +110,24 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
           // == 3. countReps or not? ==
           if (ok && evtMovement.sgn < 0) {
             ++count.reps;
+
             if (count.reps >= static_cast<int>(cfg.reps)) {
               ++count.sets;
+
               if (count.sets >= static_cast<int>(cfg.sets)) {
                 classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtReady{}});
                 shutdown = true;
                 return;
               } else {
                 classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtNextSet{}});
+                count.reps = 0;
               }
             } else {
               classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCount{count.reps}});
             }
           }
+
+          // check and rate
           if (ok) {
             changed = true;
             rating += 1;
