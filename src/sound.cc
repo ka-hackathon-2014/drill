@@ -7,13 +7,16 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+#include <algorithm>
 
 namespace drill {
 void play_variant(Audioxx::Player& player, const std::map<std::string, std::vector<Audioxx::Buffer>>& buffers,
-                  const std::string& id, std::mt19937& rng);
+                  const std::string& id, std::mt19937& rng,
+                  std::map<std::string, std::vector<std::size_t>>& random_state);
 
 void play_variant(Audioxx::Player& player, const std::map<std::string, std::vector<Audioxx::Buffer>>& buffers,
-                  const std::string& id, std::mt19937& rng)
+                  const std::string& id, std::mt19937& rng,
+                  std::map<std::string, std::vector<std::size_t>>& random_state)
 {
 
   const auto& variantsIt = buffers.find(id);
@@ -21,9 +24,20 @@ void play_variant(Audioxx::Player& player, const std::map<std::string, std::vect
     out()([&](std::ostream& out) { out << "Play " << id << std::endl; });
     const auto& variants = buffers.at(id);
     if (!variants.empty()) {
-      std::uniform_int_distribution<size_t> dist{0, variants.size() - 1};
-      const auto& buffer = variants.at(dist(rng));
+      // pre-shuffled index available?
+      if ((random_state.find(id) == random_state.end()) || (random_state.at(id).empty())) {
+        std::vector<std::size_t> idxs;
+        for (std::size_t i = 0; i < variants.size(); ++i) {
+          idxs.push_back(i);
+        }
+        std::shuffle(idxs.begin(), idxs.end(), rng);
+        random_state.emplace(id, std::move(idxs));
+      }
+
+      // play a random element
+      const auto& buffer = variants.at(random_state.at(id).back());
       player.play(buffer, [&]()->bool { return false; });
+      random_state.at(id).pop_back();
     } else {
       out()([&](std::ostream& out) { out << "Warning: No variant for effect " << id << std::endl; });
     }
@@ -38,6 +52,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
   std::vector<std::pair<std::string, std::vector<std::string>>> setup{
       {"calibrate", {"anfang_merged"}},                                                     //
       {"out", {"ausdembild1", "ausdembild2", "ausdembild3", "ausdembild4", "ausdembild5"}}, //
+      {"start_step_0_oneway", {"anfang7"}},                                                 //
       {"start_step_1_intro", {"uebung_intro_1_1", "uebung_intro_1_2"}},                     //
       {"start_step_2_sep1", {"uebung_intro_2_1"}},                                          //
       {"start_step_3_type_only", {"kniebeugen"}},                                           //
@@ -101,6 +116,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
   }
   std::random_device rdev;
   std::mt19937 rng{rdev()};
+  std::map<std::string, std::vector<std::size_t>> random_state;
 
   int wasEmpty = false;
   while (!(wasEmpty && shutdown)) {
@@ -111,30 +127,31 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
       if (id == "start") {
         const auto& evtStart = dynamic_cast<const EvtStart&>(*evt);
 
-        play_variant(player, buffers, "start_step_1_intro", rng);
-        play_variant(player, buffers, "start_step_2_sep1", rng);
-        play_variant(player, buffers, "start_step_3_type_only", rng);
-        play_variant(player, buffers, "start_step_4_sep2", rng);
+        play_variant(player, buffers, "anfang7", rng, random_state);
+        play_variant(player, buffers, "start_step_1_intro", rng, random_state);
+        play_variant(player, buffers, "start_step_2_sep1", rng, random_state);
+        play_variant(player, buffers, "start_step_3_type_only", rng, random_state);
+        play_variant(player, buffers, "start_step_4_sep2", rng, random_state);
 
         std::stringstream ss1;
         ss1 << "start_step_5_sets_" << evtStart.sets;
-        play_variant(player, buffers, ss1.str(), rng);
+        play_variant(player, buffers, ss1.str(), rng, random_state);
 
-        play_variant(player, buffers, "start_step_6_sep3", rng);
+        play_variant(player, buffers, "start_step_6_sep3", rng, random_state);
 
         std::stringstream ss2;
         ss2 << "start_step_7_reps_" << evtStart.reps;
-        play_variant(player, buffers, ss2.str(), rng);
+        play_variant(player, buffers, ss2.str(), rng, random_state);
 
-        play_variant(player, buffers, "start_step_8_sep4", rng);
+        play_variant(player, buffers, "start_step_8_sep4", rng, random_state);
       } else {
         if (id == "count") {
           const auto& evtCount = dynamic_cast<const EvtCount&>(*evt);
           std::stringstream ss;
           ss << "count_" << evtCount.n;
-          play_variant(player, buffers, ss.str(), rng);
+          play_variant(player, buffers, ss.str(), rng, random_state);
         } else {
-          play_variant(player, buffers, id, rng);
+          play_variant(player, buffers, id, rng, random_state);
         }
       }
     }
