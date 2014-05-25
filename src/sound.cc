@@ -83,6 +83,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
       {"count_18", {"count_18_normal", "count_18_passiv_aggr", "count_18_aggr"}},                           //
       {"count_19", {"count_19_normal", "count_19_passiv_aggr", "count_19_aggr"}},                           //
       {"count_20", {"count_20_normal", "count_20_passiv_aggr", "count_20_aggr"}},                           //
+      {"nextSet", {"pause1", "pause2"}},                                                                    //
       {"ready", {"cola", "ende1"}}};
   std::map<std::string, std::vector<Audioxx::Buffer>> buffers;
   for (const auto& type : setup) {

@@ -93,6 +93,13 @@ struct EvtCount : EvtEffect {
   }
 };
 
+struct EvtNextSet : EvtEffect {
+  virtual std::string getID() const override
+  {
+    return "nextSet";
+  }
+};
+
 struct EvtReady : EvtEffect {
   virtual std::string getID() const override
   {

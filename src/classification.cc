@@ -5,20 +5,61 @@
 #include <iostream>
 #include <list>
 #include <thread>
+#include <random>
+#include <vector>
 
 namespace drill {
+
+template <typename T>
+struct TopBottom {
+  T top;
+  T bottom;
+};
+
+template <typename T>
+struct RepsSets {
+  T reps;
+  T sets;
+
+  RepsSets() = default;
+  RepsSets(T reps_, T sets_) : reps(reps_), sets(sets_)
+  {
+  }
+};
+
+std::pair<std::size_t, std::size_t> chooseSetsReps()
+{
+  std::vector<std::pair<std::size_t, std::vector<std::size_t>>> styles{{1, {20}},         //
+                                                                       {2, {10, 15, 20}}, //
+                                                                       {3, {10, 15}},     //
+                                                                       {4, {10, 15}},     //
+                                                                       {5, {5, 10}}};
+
+  std::random_device rdev;
+  std::mt19937 rng{rdev()};
+
+  auto dist_style = std::uniform_int_distribution<std::size_t>{0, styles.size() - 1};
+  const auto& style = styles.at(dist_style(rng));
+
+  auto dist_reps = std::uniform_int_distribution<std::size_t>{0, style.second.size() - 1};
+  std::size_t reps = style.second.at(dist_reps(rng));
+
+  return std::make_pair(style.first, reps);
+}
+
 void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction_q,
                         concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, std::atomic<bool>& shutdown)
 {
   auto lastTp = std::chrono::system_clock::now();
   bool calibrated = false;
-  std::list<double> caliTopLst;
-  std::list<double> caliBottomLst;
-  double caliTop = 0;
-  double caliBottom = 0;
-  int count = 0;
+  TopBottom<std::list<double>> caliLst;
+  TopBottom<double> cali;
+  RepsSets<int> count{0, 0};
   bool changed = false;
   constexpr double heightThreshold = 0.2;
+
+  RepsSets<std::size_t> cfg;
+  std::tie(cfg.sets, cfg.reps) = chooseSetsReps();
 
   classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCalibrate{}});
 
@@ -46,25 +87,30 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
 
           // == 2. height? ==
           if (ok && evtMovement.sgn < 0) {
-            double deltaHeight = std::max(0.0, caliBottom - evtMovement.y);
+            double deltaHeight = std::max(0.0, cali.bottom - evtMovement.y);
             out()([&](std::ostream& out) {
-              out << "d=" << deltaHeight << " >= " << heightThreshold* std::abs(caliBottom - caliTop) << std::endl;
+              out << "d=" << deltaHeight << " >= " << heightThreshold* std::abs(cali.bottom - cali.top) << std::endl;
             });
-            if (deltaHeight >= heightThreshold * std::abs(caliBottom - caliTop)) {
+            if (deltaHeight >= heightThreshold * std::abs(cali.bottom - cali.top)) {
               classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtHeight{}});
               ok = false;
             }
           }
 
-          // == 3. count or not? ==
+          // == 3. countReps or not? ==
           if (ok && evtMovement.sgn < 0) {
-            ++count;
-            if (count == 10) {
-              classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtReady{}});
-              shutdown = true;
-              return;
+            ++count.reps;
+            if (count.reps >= static_cast<int>(cfg.reps)) {
+              ++count.sets;
+              if (count.sets >= static_cast<int>(cfg.sets)) {
+                classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtReady{}});
+                shutdown = true;
+                return;
+              } else {
+                classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtNextSet{}});
+              }
             } else {
-              classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCount{count}});
+              classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCount{count.reps}});
             }
           }
           if (ok)
@@ -72,19 +118,19 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
         } else {
           // == 0. calibration ==
           if (evtMovement.sgn < 0) {
-            caliBottomLst.push_back(evtMovement.y);
+            caliLst.bottom.push_back(evtMovement.y);
           } else {
-            caliTopLst.push_back(evtMovement.y);
+            caliLst.top.push_back(evtMovement.y);
           }
 
-          if ((caliTopLst.size() >= 2) && (caliBottomLst.size() >= 2)) {
-            caliTop = std::accumulate(caliTopLst.begin(), caliTopLst.end(), 0, std::plus<double>{}) /
-                      static_cast<double>(caliTopLst.size());
-            caliBottom = std::accumulate(caliBottomLst.begin(), caliBottomLst.end(), 0, std::plus<double>{}) /
-                         static_cast<double>(caliBottomLst.size());
-            if (caliTop < caliBottom) {
+          if ((caliLst.top.size() >= 2) && (caliLst.bottom.size() >= 2)) {
+            cali.top = std::accumulate(caliLst.top.begin(), caliLst.top.end(), 0, std::plus<double>{}) /
+                       static_cast<double>(caliLst.top.size());
+            cali.bottom = std::accumulate(caliLst.bottom.begin(), caliLst.bottom.end(), 0, std::plus<double>{}) /
+                          static_cast<double>(caliLst.bottom.size());
+            if (cali.top < cali.bottom) {
               calibrated = true;
-              classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtStart{10, 1}});
+              classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtStart{cfg.reps, cfg.sets}});
             }
           }
         }
