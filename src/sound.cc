@@ -12,16 +12,19 @@
 namespace drill {
 void play_variant(Audioxx::Player& player, const std::map<std::string, std::vector<Audioxx::Buffer>>& buffers,
                   const std::string& id, std::mt19937& rng,
-                  std::map<std::string, std::vector<std::size_t>>& random_state);
+                  std::map<std::string, std::vector<std::size_t>>& random_state, bool verbose);
 
 void play_variant(Audioxx::Player& player, const std::map<std::string, std::vector<Audioxx::Buffer>>& buffers,
                   const std::string& id, std::mt19937& rng,
-                  std::map<std::string, std::vector<std::size_t>>& random_state)
+                  std::map<std::string, std::vector<std::size_t>>& random_state, bool verbose)
 {
 
   const auto& variantsIt = buffers.find(id);
   if (variantsIt != buffers.end()) {
-    out()([&](std::ostream& out) { out << "Play " << id << std::endl; });
+
+    if (verbose)
+      out()([&](std::ostream& out) { out << "Play " << id << std::endl; });
+
     const auto& variants = buffers.at(id);
     if (!variants.empty()) {
       // pre-shuffled index available?
@@ -39,14 +42,17 @@ void play_variant(Audioxx::Player& player, const std::map<std::string, std::vect
       player.play(buffer, [&]()->bool { return false; });
       random_state.at(id).pop_back();
     } else {
-      out()([&](std::ostream& out) { out << "Warning: No variant for effect " << id << std::endl; });
+      if (verbose)
+        out()([&](std::ostream& out) { out << "Warning: No variant for effect " << id << std::endl; });
     }
   } else {
-    out()([&](std::ostream& out) { out << "Warning: Unknown effect " << id << std::endl; });
+    if (verbose)
+      out()([&](std::ostream& out) { out << "Warning: Unknown effect " << id << std::endl; });
   }
 }
 
-void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, std::atomic<bool>& shutdown) try
+void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, std::atomic<bool>& shutdown,
+               bool verbose) try
 {
   Audioxx::Player player;
   std::vector<std::pair<std::string, std::vector<std::string>>> setup{
@@ -107,10 +113,12 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
   for (const auto& type : setup) {
     std::vector<Audioxx::Buffer> variants;
     for (const std::string& name : type.second) {
-      std::stringstream ss;
-      ss << "sound/" << name << ".ogg";
-      out()([&](std::ostream& out) { out << "Load " << ss.str() << std::endl; });
-      variants.emplace_back(Audioxx::Buffer{ss.str()});
+      std::string path{"sound/" + name + ".ogg"};
+
+      if (verbose)
+        out()([&](std::ostream& out) { out << "Load " << path << std::endl; });
+
+      variants.emplace_back(Audioxx::Buffer{path});
     }
     buffers.emplace(type.first, std::move(variants));
   }
@@ -127,31 +135,30 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
       if (id == "start") {
         const auto& evtStart = dynamic_cast<const EvtStart&>(*evt);
 
-        play_variant(player, buffers, "start_step_0_oneway", rng, random_state);
-        play_variant(player, buffers, "start_step_1_intro", rng, random_state);
-        play_variant(player, buffers, "start_step_2_sep1", rng, random_state);
-        play_variant(player, buffers, "start_step_3_type_only", rng, random_state);
-        play_variant(player, buffers, "start_step_4_sep2", rng, random_state);
+        play_variant(player, buffers, "start_step_0_oneway", rng, random_state, verbose);
+        play_variant(player, buffers, "start_step_1_intro", rng, random_state, verbose);
+        play_variant(player, buffers, "start_step_2_sep1", rng, random_state, verbose);
+        play_variant(player, buffers, "start_step_3_type_only", rng, random_state, verbose);
+        play_variant(player, buffers, "start_step_4_sep2", rng, random_state, verbose);
 
         std::stringstream ss1;
         ss1 << "start_step_5_sets_" << evtStart.sets;
-        play_variant(player, buffers, ss1.str(), rng, random_state);
-
-        play_variant(player, buffers, "start_step_6_sep3", rng, random_state);
+        play_variant(player, buffers, ss1.str(), rng, random_state, verbose);
+        play_variant(player, buffers, "start_step_6_sep3", rng, random_state, verbose);
 
         std::stringstream ss2;
         ss2 << "start_step_7_reps_" << evtStart.reps;
-        play_variant(player, buffers, ss2.str(), rng, random_state);
+        play_variant(player, buffers, ss2.str(), rng, random_state, verbose);
 
-        play_variant(player, buffers, "start_step_8_sep4", rng, random_state);
+        play_variant(player, buffers, "start_step_8_sep4", rng, random_state, verbose);
       } else {
         if (id == "count") {
           const auto& evtCount = dynamic_cast<const EvtCount&>(*evt);
           std::stringstream ss;
           ss << "count_" << evtCount.n;
-          play_variant(player, buffers, ss.str(), rng, random_state);
+          play_variant(player, buffers, ss.str(), rng, random_state, verbose);
         } else {
-          play_variant(player, buffers, id, rng, random_state);
+          play_variant(player, buffers, id, rng, random_state, verbose);
         }
       }
     }
@@ -166,6 +173,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
 }
 catch (const std::runtime_error& e)
 {
+  // XXX: verbose flag, only run_* function gets it, though!
   out()([&](std::ostream& out) { out << e.what() << std::endl; });
   shutdown = true;
 }

@@ -50,7 +50,8 @@ std::pair<std::size_t, std::size_t> chooseSetsReps()
 }
 
 void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction_q,
-                        concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, std::atomic<bool>& shutdown)
+                        concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, std::atomic<bool>& shutdown,
+                        bool verbose)
 {
   auto lastTp = std::chrono::system_clock::now();
   bool calibrated = false;
@@ -73,9 +74,11 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
       if (evt->getID() == "movement") {
         const auto& evtMovement = dynamic_cast<const EvtMovementChange&>(*evt);
 
-        out()([&](std::ostream& out) {
-          out << "MvtmChange x=" << evtMovement.x << " y=" << evtMovement.y << " sgn=" << evtMovement.sgn << std::endl;
-        });
+        if (verbose)
+          out()([&](std::ostream& out) {
+            out << "MvtmChange x=" << evtMovement.x << " y=" << evtMovement.y << " sgn=" << evtMovement.sgn
+                << std::endl;
+          });
 
         if (calibrated) {
           bool ok = true;
@@ -92,9 +95,12 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
           // == 2. height? ==
           if (ok && evtMovement.sgn < 0) {
             double deltaHeight = std::max(0.0, cali.bottom - evtMovement.y);
-            out()([&](std::ostream& out) {
-              out << "d=" << deltaHeight << " >= " << heightThreshold* std::abs(cali.bottom - cali.top) << std::endl;
-            });
+
+            if (verbose)
+              out()([&](std::ostream& out) {
+                out << "d=" << deltaHeight << " >= " << heightThreshold* std::abs(cali.bottom - cali.top) << std::endl;
+              });
+
             if (deltaHeight >= heightThreshold * std::abs(cali.bottom - cali.top)) {
               classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtHeight{}});
               ok = false;

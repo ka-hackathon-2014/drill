@@ -9,7 +9,7 @@
 
 namespace drill {
 void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction_q,
-                        concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, std::atomic<bool>& shutdown);
+                        concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, std::atomic<bool>& shutdown, bool verbose);
 }
 
 #endif /* end of include guard: CLASSIFICATION_H */
