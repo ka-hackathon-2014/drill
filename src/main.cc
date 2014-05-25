@@ -83,10 +83,7 @@ int main(int argc, char** argv)
 
   // Classification
   std::thread classification{[&] {
-    const lifetime sentry
-    {
-      "classification", verbose
-    }
+    const lifetime sentry{"classification", verbose};
 
     run_classification(extraction_q, classification_q, shutdown);
   }};
@@ -94,10 +91,7 @@ int main(int argc, char** argv)
 
   // Sound
   std::thread sound{[&] {
-    const lifetime sentry
-    {
-      "sound", verbose
-    }
+    const lifetime sentry{"sound", verbose};
 
     run_sound(classification_q, shutdown);
   }};
