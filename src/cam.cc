@@ -44,7 +44,7 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
 
     // no faces detected, no need to evaluate any further here
     if (faces.size() == 0) {
-      if (tracking_active && (now - face_seen) > 1000) {
+      if (tracking_active && (now - face_seen) > 5000) {
         extraction_q_.enqueue(std::unique_ptr<EvtCamera>{new EvtTrackingLost{}});
         tracking_active = false;
       }
@@ -101,9 +101,19 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
   // if we jumped out of the eventloop, force all stages to shutdown
   throw shutdown_t{};
 }
+catch (const std::runtime_error& e)
+{
+  out()([&](std::ostream& out) { out << e.what() << std::endl; });
+}
+catch (const shutdown_t&)
+{
+  // ok, let's shutdown
+  // destructor does the shutdown already
+}
 catch (...)
 {
   // destructor does the shutdown already
+  out()([&](std::ostream& out) { out << "WTF?!" << std::endl; });
 }
 
 std::vector<cv::Rect> cam::get_faces(const cv::Mat& frame, double min_depth, double max_depth)

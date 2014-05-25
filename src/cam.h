@@ -38,7 +38,7 @@ public:
     shutdown_ = true;
   }
 
-  void interact(bool ui = false, std::size_t fps = 30, std::size_t slice_length = 1000, double threshold = 0.75);
+  void interact(bool ui = false, std::size_t fps = 30, std::size_t slice_length = 1000, double threshold = 0.25);
 
 private:
   concurrent_queue<std::unique_ptr<EvtCamera>>& extraction_q_;

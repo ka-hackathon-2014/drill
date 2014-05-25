@@ -46,8 +46,8 @@ int main(int argc, char** argv)
 
 
   std::string classifier{args.size() > 1 ? args[1] : "classifier/haarcascade_frontalface_alt.xml"};
-  bool ui = false;
-  bool verbose = false;
+  bool ui = true;
+  bool verbose = true;
 
 
   // Extraction

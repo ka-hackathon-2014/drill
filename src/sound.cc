@@ -127,7 +127,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
       if (id == "start") {
         const auto& evtStart = dynamic_cast<const EvtStart&>(*evt);
 
-        play_variant(player, buffers, "anfang7", rng, random_state);
+        play_variant(player, buffers, "start_step_0_oneway", rng, random_state);
         play_variant(player, buffers, "start_step_1_intro", rng, random_state);
         play_variant(player, buffers, "start_step_2_sep1", rng, random_state);
         play_variant(player, buffers, "start_step_3_type_only", rng, random_state);
