@@ -37,6 +37,7 @@ void run_sound(concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, s
   Audioxx::Player player;
   std::vector<std::pair<std::string, std::vector<std::string>>> setup{
       {"calibrate", {}},                                                //
+      {"out", {"ausdembild1"}},                                         //
       {"start_step_1_intro", {"uebung_intro_1_1", "uebung_intro_1_2"}}, //
       {"start_step_2_sep1", {"uebung_intro_2_1"}},                      //
       {"start_step_3_type_only", {"kniebeugen"}},                       //

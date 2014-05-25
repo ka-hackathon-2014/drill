@@ -7,7 +7,7 @@
 #include <thread>
 
 namespace drill {
-void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
+void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction_q,
                         concurrent_queue<std::unique_ptr<EvtEffect>>& classification_q, std::atomic<bool>& shutdown)
 {
   auto lastTp = std::chrono::system_clock::now();
@@ -25,64 +25,71 @@ void run_classification(concurrent_queue<EvtMovementChange>& extraction_q,
   while (!shutdown) {
     auto lst = extraction_q.dequeue();
     for (const auto& evt : lst) {
-      out()([&](std::ostream& out) {
-        out << "MvtmChange x=" << evt.x << " y=" << evt.y << " sgn=" << evt.sgn << std::endl;
-      });
-      if (calibrated) {
-        bool ok = true;
-        // == 1. too fast? ==
-        auto nowTp = std::chrono::system_clock::now();
-        auto deltaMs = std::chrono::duration_cast<std::chrono::milliseconds>(nowTp - lastTp).count();
-        if (deltaMs < 300) {
-          classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtTooFast{}});
-          ok = false;
-        }
-        lastTp = std::chrono::system_clock::now();
+      if (evt->getID() == "movement") {
+        const auto& evtMovement = dynamic_cast<const EvtMovementChange&>(*evt);
 
+        out()([&](std::ostream& out) {
+          out << "MvtmChange x=" << evtMovement.x << " y=" << evtMovement.y << " sgn=" << evtMovement.sgn << std::endl;
+        });
 
-        // == 2. height? ==
-        if (ok && evt.sgn < 0) {
-          double deltaHeight = std::max(0.0, caliBottom - evt.y);
-          out()([&](std::ostream& out) {
-            out << "d=" << deltaHeight << " >= " << heightThreshold* std::abs(caliBottom - caliTop) << std::endl;
-          });
-          if (deltaHeight >= heightThreshold * std::abs(caliBottom - caliTop)) {
-            classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtHeight{}});
+        if (calibrated) {
+          bool ok = true;
+          // == 1. too fast? ==
+          auto nowTp = std::chrono::system_clock::now();
+          auto deltaMs = std::chrono::duration_cast<std::chrono::milliseconds>(nowTp - lastTp).count();
+          if (deltaMs < 300) {
+            classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtTooFast{}});
             ok = false;
           }
-        }
+          lastTp = std::chrono::system_clock::now();
 
-        // == 3. count or not? ==
-        if (ok && evt.sgn < 0) {
-          ++count;
-          if (count == 10) {
-            classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtReady{}});
-            shutdown = true;
-            return;
-          } else {
-            classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCount{count}});
+
+          // == 2. height? ==
+          if (ok && evtMovement.sgn < 0) {
+            double deltaHeight = std::max(0.0, caliBottom - evtMovement.y);
+            out()([&](std::ostream& out) {
+              out << "d=" << deltaHeight << " >= " << heightThreshold* std::abs(caliBottom - caliTop) << std::endl;
+            });
+            if (deltaHeight >= heightThreshold * std::abs(caliBottom - caliTop)) {
+              classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtHeight{}});
+              ok = false;
+            }
           }
-        }
-        if (ok)
-          changed = true;
-      } else {
-        // == 0. calibration ==
-        if (evt.sgn < 0) {
-          caliBottomLst.push_back(evt.y);
+
+          // == 3. count or not? ==
+          if (ok && evtMovement.sgn < 0) {
+            ++count;
+            if (count == 10) {
+              classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtReady{}});
+              shutdown = true;
+              return;
+            } else {
+              classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtCount{count}});
+            }
+          }
+          if (ok)
+            changed = true;
         } else {
-          caliTopLst.push_back(evt.y);
-        }
+          // == 0. calibration ==
+          if (evtMovement.sgn < 0) {
+            caliBottomLst.push_back(evtMovement.y);
+          } else {
+            caliTopLst.push_back(evtMovement.y);
+          }
 
-        if ((caliTopLst.size() >= 2) && (caliBottomLst.size() >= 2)) {
-          caliTop = std::accumulate(caliTopLst.begin(), caliTopLst.end(), 0, std::plus<double>{}) /
-                    static_cast<double>(caliTopLst.size());
-          caliBottom = std::accumulate(caliBottomLst.begin(), caliBottomLst.end(), 0, std::plus<double>{}) /
-                       static_cast<double>(caliBottomLst.size());
-          if (caliTop < caliBottom) {
-            calibrated = true;
-            classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtStart{10, 1}});
+          if ((caliTopLst.size() >= 2) && (caliBottomLst.size() >= 2)) {
+            caliTop = std::accumulate(caliTopLst.begin(), caliTopLst.end(), 0, std::plus<double>{}) /
+                      static_cast<double>(caliTopLst.size());
+            caliBottom = std::accumulate(caliBottomLst.begin(), caliBottomLst.end(), 0, std::plus<double>{}) /
+                         static_cast<double>(caliBottomLst.size());
+            if (caliTop < caliBottom) {
+              calibrated = true;
+              classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtStart{10, 1}});
+            }
           }
         }
+      } else if (evt->getID() == "lost") {
+        classification_q.enqueue(std::unique_ptr<EvtEffect>{new EvtOut{}});
       }
     }
 

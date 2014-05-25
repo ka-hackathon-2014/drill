@@ -5,6 +5,7 @@
 #include <string>
 #include <atomic>
 #include <chrono>
+#include <memory>
 
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -12,13 +13,14 @@
 
 #include "queue.h"
 #include "event.h"
+#include "debug.h"
 
 namespace drill {
 
 class cam {
 
 public:
-  cam(concurrent_queue<EvtMovementChange>& q, std::atomic<bool>& shutdown, std::string classifier)
+  cam(concurrent_queue<std::unique_ptr<EvtCamera>>& q, std::atomic<bool>& shutdown, std::string classifier)
       : extraction_q_{q}, shutdown_{shutdown}, classifier_{std::move(classifier)}
   {
     // default device
@@ -39,7 +41,7 @@ public:
   void interact(bool ui = false, std::size_t fps = 30, std::size_t slice_length = 200, double threshold = 0.75);
 
 private:
-  concurrent_queue<EvtMovementChange>& extraction_q_;
+  concurrent_queue<std::unique_ptr<EvtCamera>>& extraction_q_;
   std::atomic<bool>& shutdown_;
   std::string classifier_;
 

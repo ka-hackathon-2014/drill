@@ -42,7 +42,7 @@ int main(int argc, char** argv)
    * Staged architecture: passing events through queues
    * [extraction] --> [classification] --> [sound]
    */
-  concurrent_queue<EvtMovementChange> extraction_q;
+  concurrent_queue<std::unique_ptr<EvtCamera>> extraction_q;
   concurrent_queue<std::unique_ptr<EvtEffect>> classification_q;
 
 

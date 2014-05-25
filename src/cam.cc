@@ -33,15 +33,26 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
 
   std::vector<cv::Rect> faces;
   int direction = 0;
+  bool tracking_active = false;
+  std::size_t face_seen = 0;
 
   // eventloop
   while (!shutdown_) {
+    std::size_t now = static_cast<std::size_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count());
     device_ >> frame_;
     faces = get_faces(frame_);
 
     // no faces detected, no need to evaluate any further here
-    if (faces.size() == 0)
+    if (faces.size() == 0) {
+      if (tracking_active && (now - face_seen) > 1000) {
+        extraction_q_.enqueue(std::unique_ptr<EvtCamera>{new EvtTrackingLost{}});
+        tracking_active = false;
+      }
       continue;
+    }
+    tracking_active = true;
+    face_seen = now;
 
     const auto& face = faces.front();
     cv::Point center{face.x + face.width / 2, face.y + face.height / 2};
@@ -55,8 +66,6 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
     }
 
     // rolling window
-    std::size_t now = static_cast<std::size_t>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count());
     window_new.push_back(std::make_pair(now, center));
     while (!window_new.empty() && (now - window_new.front().first > slice_length / 2)) {
       window_old.push_back(window_new.front());
@@ -83,7 +92,7 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
       direction = current_direction;
 
       auto x = static_cast<double>(window_new.front().second.x), y = static_cast<double>(window_new.front().second.y);
-      extraction_q_.enqueue(EvtMovementChange{x, y, direction});
+      extraction_q_.enqueue(std::unique_ptr<EvtCamera>{new EvtMovementChange{x, y, direction}});
     }
 
     // next frame please

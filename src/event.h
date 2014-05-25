@@ -5,14 +5,29 @@
 
 namespace drill {
 
-struct EvtMovementChange {
-  EvtMovementChange(double x_, double y_, int sgn_ = 0) : x{x_}, y{y_}, sgn(sgn_)
-  {
-  }
+struct EvtCamera {
+  virtual ~EvtCamera() = default;
+  virtual std::string getID() const = 0;
+};
 
+struct EvtMovementChange : EvtCamera {
   double x;
   double y;
   int sgn;
+  EvtMovementChange(double x_, double y_, int sgn_ = 0) : x{x_}, y{y_}, sgn(sgn_)
+  {
+  }
+  virtual std::string getID() const override
+  {
+    return "movement";
+  }
+};
+
+struct EvtTrackingLost : EvtCamera {
+  virtual std::string getID() const override
+  {
+    return "lost";
+  }
 };
 
 struct EvtEffect {
@@ -36,6 +51,13 @@ struct EvtCalibrate : EvtEffect {
   virtual std::string getID() const override
   {
     return "calibrate";
+  }
+};
+
+struct EvtOut : EvtEffect {
+  virtual std::string getID() const override
+  {
+    return "out";
   }
 };
 
