@@ -1,5 +1,6 @@
 # drill
 
+**Warning: This app may kick your ass!**
 
 ## Getting started
 
