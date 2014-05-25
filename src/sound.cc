@@ -29,11 +29,25 @@ void play_variant(Audioxx::Player& player, const std::map<std::string, std::vect
     if (!variants.empty()) {
       // pre-shuffled index available?
       if ((random_state.find(id) == random_state.end()) || (random_state.at(id).empty())) {
+        // create index list without direct repetitions
+        // length is just set to 5*number_of_variants
+        // if there is only 1 variant, we have to repeet :(
         std::vector<std::size_t> idxs;
-        for (std::size_t i = 0; i < variants.size(); ++i) {
-          idxs.push_back(i);
+
+        for (std::size_t i = 0; i < variants.size() * 5; ++i) {
+          if (variants.size() == 1) {
+            idxs.push_back(0);
+          } else {
+            std::vector<size_t> choices;
+            for (std::size_t j = 0; j < variants.size(); ++j) {
+              if (i != j) {
+                choices.push_back(j);
+              }
+            }
+            idxs.push_back(choices.at(std::uniform_int_distribution<std::size_t> { 0, choices.size() - 1 }(rng)));
+          }
         }
-        std::shuffle(idxs.begin(), idxs.end(), rng);
+
         random_state.emplace(id, std::move(idxs));
       }
 
