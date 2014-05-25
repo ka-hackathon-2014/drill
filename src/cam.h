@@ -52,7 +52,6 @@ private:
   std::vector<cv::Rect> get_faces(const cv::Mat& frame, double min_depth = 0.15, double max_depth = 0.5);
 
   using clock_t_ = std::chrono::high_resolution_clock;
-  using epoch_t_ = decltype(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 
   struct shutdown_t {
   };

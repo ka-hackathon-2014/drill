@@ -23,7 +23,7 @@ namespace {
 
 void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double threshold) try
 {
-  auto start = std::chrono::system_clock::now();
+  auto start = clock_t_::now();
   std::deque<std::pair<std::size_t, cv::Point>> window_old;
   std::deque<std::pair<std::size_t, cv::Point>> window_new;
 
@@ -38,7 +38,8 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
   // eventloop
   while (!shutdown_) {
     std::size_t now = static_cast<std::size_t>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count());
+        std::chrono::duration_cast<std::chrono::milliseconds>(clock_t_::now() - start).count());
+
     device_ >> frame_;
     faces = get_faces(frame_);
 
@@ -50,6 +51,7 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
       }
       continue;
     }
+
     tracking_active = true;
     face_seen = now;
 
@@ -70,14 +72,15 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
       window_old.push_back(window_new.front());
       window_new.pop_front();
     }
+
     while (!window_old.empty() && (now - window_old.front().first > slice_length)) {
       window_old.pop_front();
     }
 
     auto accu_func = [](double a, std::pair<std::size_t, cv::Point> b) { return a + static_cast<double>(b.second.y); };
-    auto accu_old_y = std::accumulate(window_old.cbegin(), window_old.cend(), 0.0, accu_func) /
+    auto accu_old_y = std::accumulate(std::begin(window_old), std::end(window_old), double {0.0}, accu_func) /
                       static_cast<double>(std::max(std::size_t{1}, window_old.size()));
-    auto accu_new_y = std::accumulate(window_new.cbegin(), window_new.cend(), 0.0, accu_func) /
+    auto accu_new_y = std::accumulate(std::begin(window_new), std::end(window_new), double {0.0}, accu_func) /
                       static_cast<double>(window_new.size());
 
     auto estimate_y = accu_new_y - accu_old_y;
@@ -90,7 +93,9 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
     if (current_direction != direction && static_cast<double>(std::abs(estimate_y)) > scaled_threshold) {
       direction = current_direction;
 
-      auto x = static_cast<double>(window_new.front().second.x), y = static_cast<double>(window_new.front().second.y);
+      auto x = static_cast<double>(window_new.front().second.x);
+      auto y = static_cast<double>(window_new.front().second.y);
+
       extraction_q_.enqueue(std::unique_ptr<EvtCamera>{new EvtMovementChange{x, y, direction}});
     }
 
