@@ -8,7 +8,6 @@
 #include <deque>
 #include <algorithm>
 
-#include "debug.h"
 #include "cam.h"
 
 namespace drill {

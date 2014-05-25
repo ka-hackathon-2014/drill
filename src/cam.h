@@ -21,7 +21,7 @@ class cam {
 
 public:
   cam(concurrent_queue<std::unique_ptr<EvtCamera>>& q, std::atomic<bool>& shutdown, std::string classifier)
-      : extraction_q_{q}, shutdown_{shutdown}, classifier_{std::move(classifier)}
+      : extraction_q_(q), shutdown_(shutdown), classifier_{std::move(classifier)}
   {
     // default device
     device_.open(0);

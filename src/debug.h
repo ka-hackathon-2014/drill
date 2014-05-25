@@ -21,18 +21,21 @@ static monitor<std::ostream&>& out()
 // RAII-style debug lifetime messages
 class lifetime {
 public:
-  lifetime(std::string name) : name_{std::move(name)}
+  lifetime(std::string name, bool verbose) : name_{std::move(name)}, verbose_{verbose}
   {
-    out()([&](std::ostream& out) { out << name_ << ": initialized" << std::endl; });
+    if (verbose_)
+      out()([&](std::ostream& out) { out << name_ << ": initialized" << std::endl; });
   }
 
   ~lifetime()
   {
-    out()([&](std::ostream& out) { out << name_ << ": shutdown" << std::endl; });
+    if (verbose_)
+      out()([&](std::ostream& out) { out << name_ << ": shutdown" << std::endl; });
   }
 
 private:
   std::string name_;
+  bool verbose_;
 };
 }
 

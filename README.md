@@ -38,8 +38,10 @@ Environment variable   |  Type     |  Effect
 DRILL\_VERBOSE         | set/unset | Various debug messages
 DRILL\_SHOWSELF        | set/unset | UI, for showing webcam and tracked feature
 DRILL\_CAMTHRESHOLD    | double    | Filter movement jitter, based on percentage of face heigth
+DRILL\_GUIFPS          | unsigned  | Frames per second, depends on DRILL\_SHOWSELF
 DRILL\_CAMSLICELENGTH  | unsigned  | Sliding window timeslice in ms, for direction estimation
 
+Note: set only if you know what you're doing!
 
 
 ## License

@@ -24,6 +24,6 @@ public:
     return f(t);
   }
 };
-};
+}
 
 #endif
