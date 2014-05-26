@@ -9,7 +9,7 @@ This implements a drill sergeant which watches you doing squats and shouts at yo
 ## Requirements
 To run drill, you need at least the following environment:
 
-* Good webcam (not to blurry, try to adjust the lighting)
+* Good webcam (not too blurry, try to adjust the lighting)
 * OpenCV 2
 * OpenAL, Alure
 * Linux, OSX (untested), Windows (untested)
