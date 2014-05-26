@@ -2,10 +2,14 @@
 
 **Warning: This app may kick your ass!**
 
+**Note: Currently we only support German sounds.**
+
+This implements a drill sergeant which watches you doing squats and shouts at you if you're weak.
+
 ## Requirements
 To run drill, you need at least the following environment:
 
-* good Webcam (not to blurry, try to adjust the lighting)
+* Good webcam (not to blurry, try to adjust the lighting)
 * OpenCV 2
 * OpenAL, Alure
 * Linux, OSX (untested), Windows (untested)
