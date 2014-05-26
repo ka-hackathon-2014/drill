@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Drill Sounds</title>
+        <meta charset="utf-8" />
+        <script type="text/javascript" charset="utf-8">
+var sounds = {
+    "Bund": "mot_bund1",
+    "Cola": "cola",
+    "Liebe Gott": "mot_lieber_gott1",
+    "Mama": "mot_mama1",
+    "Tiefer": "tiefer3",
+    "Tränen": "mot_traenen1",
+    "Zum Boden": "tiefer1",
+};
+
+function play(id) {
+    "use strict";
+
+    document.getElementById(id).play();
+}
+
+function init() {
+    "use strict";
+    var i, ids;
+
+    ids = Object.keys(sounds);
+    for (i = 0; i < ids.length; ++i) {
+        var elementAudio, elementDiv, elementP, elementSource, file, id;
+
+        id = ids[i];
+        file = sounds[id] + ".ogg";
+
+        elementP = document.createElement("p");
+        elementP.innerHTML = id;
+
+        elementSource = document.createElement("source");
+        elementSource.src = file;
+        elementSource.type = "audio/ogg";
+
+        elementAudio = document.createElement("audio");
+        elementAudio.appendChild(elementSource);
+        elementAudio.id = id;
+
+        elementDiv = document.createElement("div");
+        elementDiv.appendChild(elementP);
+        elementDiv.appendChild(elementAudio);
+        elementDiv.className = "pad";
+        elementDiv.setAttribute("onclick", "play('" + id + "')");
+
+        document.body.appendChild(elementDiv);
+    }
+}
+        </script>
+        <style type="text/css" media="screen">
+body {
+    background: #222;
+    color: #d66;
+}
+
+h1 {
+    text-align: center;
+}
+
+.pad {
+    background: #ffa;
+    border-radius: 20px;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: inline-block;
+    height: 150px;
+    margin: 15px;
+    width: 150px;
+}
+
+.pad p {
+    font-weight: bold;
+    margin: 0;
+    position: relative;
+    text-align: center;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+        </style>
+    </head>
+    <body onload="init();">
+    <h1>Drill Sounds</h1>
+    </body>
+</html>
