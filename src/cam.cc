@@ -59,7 +59,8 @@ void cam::interact(bool ui, std::size_t fps, std::size_t slice_length, double th
     cv::Point center{face.x + face.width / 2, face.y + face.height / 2};
 
     if (ui) {
-      circle(frame_, center, 20, cvScalar(0, 0, 255, 0), -1);
+      cv::circle(frame_, center, 20, cvScalar(0, 0, 255, 0), -1);
+      cv::flip(frame_, frame_, 1);
       cv::imshow("outputCapture", frame_);
 
       if (cv::waitKey(static_cast<int>(fps)) >= 0)
