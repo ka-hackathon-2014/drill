@@ -31,9 +31,13 @@ To start drill, go to the top level source directory (not the build directory!) 
 
     ./build/drill
 
-## License
+## Licenses
 
 Copyright (C) 2014 the drill developers
 
-Distributed under the MIT License.
+The `classifier` directory which contains copies of the original OpenCV project. License and code can be found in the [OpenCV GitHub repo](https://github.com/Itseez/opencv).
+
+The sounds in the `sound` directory and sub-directories are distributed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+The source code and the remaining parts are distributed under the MIT License.
 
