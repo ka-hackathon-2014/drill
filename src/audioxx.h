@@ -1,9 +1,11 @@
+#include <AL/al.h>    // for ALuint, AL_FALSE, AL_NONE, etc
+#include <AL/alc.h>   // for ALC_INVALID_CONTEXT, etc
+#include <AL/alure.h> // for alureStopSource, etc
 #include <cassert>
 #include <cstddef>
 #include <functional>
-#include <string>
 #include <stdexcept>
-#include <AL/alure.h>
+#include <string>
 
 namespace Audioxx {
 

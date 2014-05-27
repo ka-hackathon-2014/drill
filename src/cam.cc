@@ -1,14 +1,20 @@
-#include <cstdlib>
-#include <vector>
-#include <stdexcept>
-#include <algorithm>
-#include <iterator>
-#include <utility>
-#include <functional>
-#include <deque>
-#include <algorithm>
-
 #include "cam.h"
+
+#include <opencv2/core/mat.hpp>        // for Mat::MSize::operator(), etc
+#include <opencv2/core/operations.hpp> // for Point_::Point_<_Tp>, etc
+#include <opencv2/imgproc/imgproc.hpp>
+#include <algorithm>   // for min, max
+#include <cmath>       // for abs
+#include <deque>       // for deque, _Deque_iterator, etc
+#include <iterator>    // for begin, end
+#include <numeric>     // for accumulate
+#include <stdexcept>   // for runtime_error
+#include <type_traits> // for enable_if<>::type
+#include <utility>     // for pair, make_pair
+#include <vector>      // for vector
+
+#include "event.h" // for EvtCamera, etc
+#include "queue.h" // for concurrent_queue
 
 namespace drill {
 

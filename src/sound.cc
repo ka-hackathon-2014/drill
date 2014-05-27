@@ -1,13 +1,23 @@
 #include "sound.h"
-#include "debug.h"
-#include "audioxx.h"
 
-#include <map>
-#include <random>
-#include <sstream>
-#include <thread>
-#include <vector>
-#include <algorithm>
+#include <algorithm> // for move
+#include <chrono>    // for milliseconds
+#include <list>      // for list
+#include <map>       // for map, map<>::mapped_type, etc
+#include <random>    // for mt19937, random_device
+#include <ratio>     // for ratio
+#include <sstream>   // for operator<<, basic_ostream, etc
+#include <stdexcept> // for runtime_error
+#include <string>    // for string, operator<<, etc
+#include <thread>    // for sleep_for
+#include <utility>   // for pair
+#include <vector>    // for vector
+
+#include "audioxx.h" // for Buffer, Player
+#include "debug.h"   // for out
+#include "event.h"   // for EvtEffect, EvtCount, etc
+#include "monitor.h" // for monitor
+#include "queue.h"   // for concurrent_queue
 
 namespace drill {
 void play_variant(Audioxx::Player& player, const std::map<std::string, std::vector<Audioxx::Buffer>>& buffers,

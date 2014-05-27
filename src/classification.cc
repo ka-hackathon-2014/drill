@@ -1,12 +1,26 @@
 #include "classification.h"
-#include "debug.h"
 
-#include <algorithm>
-#include <iostream>
-#include <list>
-#include <thread>
-#include <random>
-#include <vector>
+#include <cstddef>     // for size_t
+#include <algorithm>   // for max
+#include <chrono>      // for milliseconds, duration_cast, etc
+#include <cmath>       // for abs
+#include <functional>  // for plus
+#include <iostream>    // for size_t, operator<<, etc
+#include <list>        // for list, _List_iterator
+#include <numeric>     // for accumulate
+#include <random>      // for mt19937, etc
+#include <ratio>       // for ratio
+#include <string>      // for operator==, basic_string
+#include <thread>      // for sleep_for
+#include <tuple>       // for tie, tuple
+#include <type_traits> // for enable_if<>::type
+#include <utility>     // for pair, make_pair
+#include <vector>      // for vector
+
+#include "debug.h"   // for out
+#include "event.h"   // for EvtEffect, etc
+#include "monitor.h" // for monitor
+#include "queue.h"   // for concurrent_queue
 
 namespace drill {
 

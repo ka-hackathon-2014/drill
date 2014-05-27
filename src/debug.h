@@ -1,11 +1,11 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include <chrono>
 #include <iostream>
 #include <ostream>
 #include <string>
 #include <utility>
-#include <chrono>
 
 #include "monitor.h"
 

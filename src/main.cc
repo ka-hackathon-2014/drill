@@ -1,20 +1,21 @@
-#include <cstdlib>
-#include <thread>
-#include <string>
-#include <atomic>
-#include <map>
+#include <atomic> // for atomic, atomic_bool
+#include <memory> // for unique_ptr
+#include <string> // for string
+#include <thread> // for thread
+#include <vector> // for vector
 
-#include "debug.h"
-#include "queue.h"
+#include "cam.h"            // for cam
+#include "classification.h" // for run_classification
+#include "debug.h"          // for lifetime
+#include "queue.h"          // for concurrent_queue
+#include "sound.h"          // for run_sound
 #include "event.h"
-#include "cam.h"
-#include "classification.h"
-#include "sound.h"
+
 
 #ifdef WIN32
 // no ctrl-c
 #else
-#include <signal.h>
+#include <signal.h> // for sigaction, SIGINT, etc
 #endif
 
 using namespace drill;
@@ -31,7 +32,8 @@ int main(int argc, char** argv)
 // no ctrl-c
 #else
   {
-    struct sigaction act{};
+    struct sigaction act {
+    };
     act.sa_handler = [](int) { shutdown = true; };
     ::sigaction(SIGINT, &act, nullptr);
   }

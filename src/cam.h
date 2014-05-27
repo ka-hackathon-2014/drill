@@ -1,21 +1,27 @@
 #ifndef CAM_H
 #define CAM_H
 
-#include <cstddef>
-#include <string>
-#include <atomic>
-#include <chrono>
-#include <memory>
+#include <opencv2/core/core.hpp>           // for Mat
+#include <opencv2/core/mat.hpp>            // for Mat::~Mat
+#include <opencv2/highgui/highgui.hpp>     // for VideoCapture
+#include <opencv2/objdetect/objdetect.hpp> // for CascadeClassifier
+#include <algorithm>                       // for move
+#include <atomic>                          // for atomic, atomic_bool
+#include <chrono>                          // for high_resolution_clock
+#include <cstddef>                         // for size_t
+#include <memory>                          // for unique_ptr
+#include <ostream>                         // for operator<<, ostream, etc
+#include <string>                          // for string
+#include <vector>                          // for vector
 
-#include <opencv2/objdetect/objdetect.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-
-#include "queue.h"
-#include "event.h"
-#include "debug.h"
+#include "debug.h"   // for out
+#include "monitor.h" // for monitor
 
 namespace drill {
+
+struct EvtCamera;
+template <typename T>
+class concurrent_queue;
 
 class cam {
 
