@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 // no ctrl-c
 #else
   {
-    struct sigaction act;
+    struct sigaction act{};
     act.sa_handler = [](int) { shutdown = true; };
     ::sigaction(SIGINT, &act, nullptr);
   }
