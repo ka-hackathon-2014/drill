@@ -24,7 +24,7 @@ In addition to the listed libraries, you need a modern C++ compiler which suppor
     cmake -G Ninja ..
     ninja
 
-To create release or debug builds, add `DCMAKE_BUILD_TYPE=Release` or `DCMAKE_BUILD_TYPE=Debug` to the CMake command line. You may also change the build tool to Make or Visual Studio. Please refer to the internet for more details :wink:
+To create release or debug builds, add `-DCMAKE_BUILD_TYPE=Release` or `-DCMAKE_BUILD_TYPE=Debug` to the CMake command line. You may also change the build tool to Make or Visual Studio. Please refer to the internet for more details :wink:
 
 ## Usage
 To start drill, go to the top level source directory (not the build directory!) and start drill using:
