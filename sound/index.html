@@ -5,27 +5,43 @@
         <meta charset="utf-8" />
         <script type="text/javascript" charset="utf-8">
 var sounds = {
+    "Bewegung": "mot_beweg_dich1",
     "Bund": "mot_bund1",
     "Cola": "cola",
     "Einbahnstraße": "anfang7",
+    "Freundchen": "mot_noch_nicht_fertig1",
+    "Lahmarsch": "schneller1",
     "Liebe Gott": "mot_lieber_gott1",
     "Mama": "mot_mama1",
+    "Schlecht": "mot_schlecht1",
     "Tiefer": "tiefer3",
     "Tränen": "mot_traenen1",
+    "Uroma": "schneller9",
+    "Verscheißern": "verscheissern1",
+    "Weg": "ausdembild2",
     "Zum Boden": "tiefer1",
+    "Zurück": "ausdembild5",
 };
 
 function play(id) {
     "use strict";
 
-    document.getElementById(id).play();
+    document.getElementById(id + "_audio").play();
+    document.getElementById(id).classList.add("play");
+}
+
+function end(id) {
+    "use strict";
+
+    document.getElementById(id).classList.remove("play");
 }
 
 function init() {
     "use strict";
-    var i, ids;
+    var i, ids, masterDiv;
 
     ids = Object.keys(sounds);
+    masterDiv = document.createElement("div");
     for (i = 0; i < ids.length; ++i) {
         var elementAudio, elementDiv, elementP, elementSource, file, id;
 
@@ -41,16 +57,20 @@ function init() {
 
         elementAudio = document.createElement("audio");
         elementAudio.appendChild(elementSource);
-        elementAudio.id = id;
+        elementAudio.id = id + "_audio";
+        elementAudio.setAttribute("onended", "end('" + id + "')");
 
         elementDiv = document.createElement("div");
         elementDiv.appendChild(elementP);
         elementDiv.appendChild(elementAudio);
+        elementDiv.id = id;
         elementDiv.className = "pad";
         elementDiv.setAttribute("onclick", "play('" + id + "')");
 
-        document.body.appendChild(elementDiv);
+        masterDiv.appendChild(elementDiv);
     }
+
+    document.body.appendChild(masterDiv);
 }
         </script>
         <style type="text/css" media="screen">
@@ -68,10 +88,12 @@ h1 {
     background: #ffa;
     border-radius: 20px;
     box-sizing: border-box;
+    color: #c55;
     cursor: pointer;
     display: inline-block;
     height: 150px;
     margin: 15px;
+    transition: background 0.5s, color 0.5s;
     width: 150px;
 }
 
@@ -82,6 +104,11 @@ h1 {
     text-align: center;
     top: 50%;
     transform: translate(0, -50%);
+}
+
+.play {
+    background: #444 !important;
+    color: #e77 !important;
 }
         </style>
     </head>
