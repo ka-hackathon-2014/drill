@@ -70,8 +70,8 @@ void run_classification(concurrent_queue<std::unique_ptr<EvtCamera>>& extraction
   auto lastTp = std::chrono::system_clock::now();
   bool calibrated = false;
   TopBottom<std::list<double>> caliLst;
-  TopBottom<double> cali;
-  RepsSets<int> count{0, 0};
+  TopBottom<double> cali{};
+  RepsSets<int> count{};
   bool changed = false;
   constexpr double heightThreshold = 0.2;
   int rating = 0;
